@@ -1,38 +1,74 @@
 import { Box } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { mockDataContacts } from "../../data/mockData";
 import Header from "../../components/Header";
 import { useTheme } from "@mui/material";
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
+import app from "../../base.js";
 
 const Contacts = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const [contacts, setContacts] = useState([]);
+
+  const calculateAge = (birthday) => {
+    const today = new Date();
+    const birthDate = new Date(birthday);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  useEffect(() => {
+    const db = getFirestore(app);
+    const contactsCollection = collection(db, 'clients');
+
+    const fetchData = async () => {
+      try {
+        const querySnapshot = await getDocs(contactsCollection);
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setContacts(data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const columns = [
     { field: "id", headerName: "ID", flex: 0.5 },
-    { field: "registrarId", headerName: "Registrar ID" },
     {
       field: "name",
       headerName: "Name",
       flex: 1,
       cellClassName: "name-column--cell",
+      valueGetter: (params) => {
+        return `${params.row.firstName} ${params.row.lastName}`;
+      },
     },
     {
-      field: "age",
+      field: "birthday",
       headerName: "Age",
       type: "number",
       headerAlign: "left",
       align: "left",
+      valueGetter: (params) => {
+        return calculateAge(params.row.birthday);
+      },
     },
     {
-      field: "phone",
-      headerName: "Phone Number",
+      field: "from",
+      headerName: "Origin",
       flex: 1,
     },
     {
-      field: "email",
-      headerName: "Email",
+      field: "passportNumber",
+      headerName: "Passport",
       flex: 1,
     },
     {
@@ -41,13 +77,8 @@ const Contacts = () => {
       flex: 1,
     },
     {
-      field: "city",
-      headerName: "City",
-      flex: 1,
-    },
-    {
-      field: "zipCode",
-      headerName: "Zip Code",
+      field: "sex",
+      headerName: "Sex",
       flex: 1,
     },
   ];
@@ -55,8 +86,8 @@ const Contacts = () => {
   return (
     <Box m="20px">
       <Header
-        title="CONTACTS"
-        subtitle="List of Contacts for Future Reference"
+        title="CLIENTS"
+        subtitle="Liste des client"
       />
       <Box
         m="40px 0 0 0"
@@ -91,7 +122,7 @@ const Contacts = () => {
         }}
       >
         <DataGrid
-          rows={mockDataContacts}
+          rows={contacts}
           columns={columns}
           components={{ Toolbar: GridToolbar }}
         />
