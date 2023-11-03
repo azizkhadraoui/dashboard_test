@@ -6,6 +6,7 @@ import { useTheme } from "@mui/material";
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import React, { useState, useEffect } from 'react';
 import app from "../../base.js";
+import {Link} from "react-router-dom"
 
 const Contacts = () => {
   const theme = useTheme();
@@ -50,6 +51,11 @@ const Contacts = () => {
       valueGetter: (params) => {
         return `${params.row.firstName} ${params.row.lastName}`;
       },
+      renderCell: (params) => (
+        <Link to={`/profile/${params.row.id}`}>
+          {`${params.row.firstName} ${params.row.lastName}`}
+        </Link>
+      ),
     },
     {
       field: "birthday",

@@ -16,6 +16,7 @@ import FAQ from "./scenes/faq";
 import Geography from "./scenes/geography";
 import Calendar from "./scenes/calendar";
 import firebase from 'firebase/app';
+import Profile from "./scenes/profile/index.jsx";
 
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
               <Route path="/faq" element={<FAQ />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/geography" element={<Geography />} />
+              <Route path='/profile/:id' element={<Profile/>}/>
         </Routes>
       </main>
     </div>
