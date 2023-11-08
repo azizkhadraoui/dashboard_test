@@ -1,22 +1,63 @@
+import React, { useState, useEffect } from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-import { tokens } from "../../theme";
-import { mockDataTeam } from "../../data/mockData";
 import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
 import Header from "../../components/Header";
+import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
+import { tokens } from "../../theme";
+import app from "../../base.js";
+
+
 
 const Team = () => {
+  const [data, setData] = useState([]);
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch emails from API
+        const response = await fetch("http://localhost:3001/api/getUserEmails");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const emails = await response.json();
+    
+        // Initialize Firestore with your own Firebase config
+        const db = getFirestore(app);
+    
+        // Query Firestore to get additional data based on emails
+        const q = query(collection(db, "users"), where("email", "in", emails));
+        const querySnapshot = await getDocs(q);
+    
+        const fetchedData = [];
+        let id = 1; // Initialize an id counter
+    
+        querySnapshot.forEach((doc) => {
+          const { name, age, phone, accessLevel, email,chiffre_affaire,num_client } = doc.data();
+          fetchedData.push({ id: id++, name, age, phone, accessLevel, email,chiffre_affaire,num_client });
+        });
+    
+        setData(fetchedData);
+        console.log(data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    
+
+    fetchData();
+  }, []);
+
   const columns = [
     { field: "id", headerName: "ID" },
     {
       field: "name",
       headerName: "Name",
       flex: 1,
-      cellClassName: "name-column--cell",
     },
     {
       field: "age",
@@ -31,6 +72,16 @@ const Team = () => {
       flex: 1,
     },
     {
+      field: "chiffre_affaire",
+      headerName: "chiffre d'affaire",
+      flex: 1,
+    },
+    {
+      field: "num_client",
+      headerName: "nombre de client",
+      flex: 1,
+    },
+    {
       field: "email",
       headerName: "Email",
       flex: 1,
@@ -39,7 +90,7 @@ const Team = () => {
       field: "accessLevel",
       headerName: "Access Level",
       flex: 1,
-      renderCell: ({ row: { access } }) => {
+      renderCell: ({ row: { accessLevel } }) => {
         return (
           <Box
             width="60%"
@@ -48,19 +99,19 @@ const Team = () => {
             display="flex"
             justifyContent="center"
             backgroundColor={
-              access === "admin"
+              accessLevel === "admin"
                 ? colors.greenAccent[600]
-                : access === "manager"
+                : accessLevel === "manager"
                 ? colors.greenAccent[700]
                 : colors.greenAccent[700]
             }
             borderRadius="4px"
           >
-            {access === "agence" && <AdminPanelSettingsOutlinedIcon />}
-            {access === "rabateur" && <SecurityOutlinedIcon />}
-            {access === "voyageur" && <LockOpenOutlinedIcon />}
+            {accessLevel === "agence" && <AdminPanelSettingsOutlinedIcon />}
+            {accessLevel === "rabateur" && <SecurityOutlinedIcon />}
+            {accessLevel === "voyageur" && <LockOpenOutlinedIcon />}
             <Typography color={colors.grey[100]} sx={{ ml: "5px" }}>
-              {access}
+              {accessLevel}
             </Typography>
           </Box>
         );
@@ -100,7 +151,7 @@ const Team = () => {
           },
         }}
       >
-        <DataGrid checkboxSelection rows={mockDataTeam} columns={columns} />
+        <DataGrid checkboxSelection rows={data} columns={columns} />
       </Box>
     </Box>
   );

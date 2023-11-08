@@ -9,6 +9,7 @@ import { tokens } from "../../theme";
 const Profile = () => {
   const { id } = useParams();
   const [contact, setContact] = useState(null);
+  const [profilePic, setProfilePic] = useState(null); // Add a separate state for profilePic
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -20,13 +21,16 @@ const Profile = () => {
       try {
         const docSnapshot = await getDoc(contactRef);
         if (docSnapshot.exists()) {
-          setContact({ id: docSnapshot.id, ...docSnapshot.data() });
+          const contactData = docSnapshot.data();
+          setContact(contactData);
+          console.log(contactData);
           const storage = getStorage(app);
           const photoRef = ref(
             storage,
-            `images/image/${contact.passportNumber}.jpg`
+            `images/image/${contactData.passportNumber}.jpg`
           );
-          contact.profilePic = await getDownloadURL(photoRef);
+          const downloadURL = await getDownloadURL(photoRef);
+          setProfilePic(downloadURL); // Set profilePic separately
         } else {
           console.log("No such document!");
         }
@@ -68,12 +72,11 @@ const Profile = () => {
         backgroundColor: colors.primary[400],
       }}
     >
-      <Avatar src={contact.profilePic} sx={{ width: 56, height: 56 }} />
+      <Avatar src={profilePic} sx={{ width: 100, height: 100 }} />
       <Typography
         variant="h4"
         sx={{ color: colors.greenAccent[300] }}
       >{`${contact.firstName} ${contact.lastName}`}</Typography>
-      <Typography variant="body1">ID: {contact.id}</Typography>
       <Typography variant="body1">
         Age: {calculateAge(contact.birthday)}
       </Typography>
@@ -85,5 +88,6 @@ const Profile = () => {
     </Box>
   );
 };
+
 
 export default Profile;

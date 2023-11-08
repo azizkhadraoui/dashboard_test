@@ -1,9 +1,13 @@
+import React, { useEffect, useState } from 'react';
 import { ResponsivePie } from "@nivo/pie";
-import { tokens } from "../theme";
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import app from "../base.js";
 import { useTheme } from "@mui/material";
-import { mockPieData as data } from "../data/mockData";
+import { tokens } from "../theme";
 
-const PieChart = () => {
+const db = getFirestore(app);
+
+const PieChartComponent = ({ data }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   return (
@@ -106,4 +110,56 @@ const PieChart = () => {
   );
 };
 
-export default PieChart;
+const App = () => {
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const usersRef = collection(db, 'clients');
+      const snapshot = await getDocs(usersRef);
+      const rawData = snapshot.docs.map(doc => doc.data());
+      console.log(rawData);
+
+      const sexCounts = {
+        male: 0,
+        female: 0
+      };
+
+      rawData.forEach(user => {
+        if (user.sex === 'male') {
+          sexCounts.male++;
+        } else if (user.sex === 'female') {
+          sexCounts.female++;
+        }
+      });
+
+      const pieChartData = [
+        {
+          id: 'male',
+          label: 'Male',
+          value: sexCounts.male,
+          color: 'hsl(104, 70%, 50%)'
+        },
+        {
+          id: 'female',
+          label: 'Female',
+          value: sexCounts.female,
+          color: 'hsl(291, 70%, 50%)'
+        }
+      ];
+
+      setData(pieChartData);
+    };
+
+    fetchData();
+  }, []);
+  console.log(data);
+
+  return (
+    <div style={{ height: '500px' }}>
+      <PieChartComponent data={data} />
+    </div>
+  );
+};
+
+export default App;

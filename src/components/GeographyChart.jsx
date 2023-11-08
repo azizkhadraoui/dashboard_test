@@ -1,84 +1,109 @@
+import React, { useState, useEffect } from "react";
 import { useTheme } from "@mui/material";
-import { ResponsiveGeoMap } from "@nivo/geo";
-import { gadm41_TUN_1 } from "../data/gadm41_TUN_1.js";
+import { ResponsiveChoropleth } from "@nivo/geo";
 import { tokens } from "../theme";
-import { IconButton } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
-import { useState } from "react";
+import { mockGeographyData as data } from "../data/mockData";
+import data2 from "../data/tunisiaGeoJSON.geojson"
 
 const GeographyChart = ({ isDashboard = false }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
-  const [zoomLevel, setZoomLevel] = useState(3);
-  const centerCoordinates = [9.5375, 33.8869];
+  const [tunisiaGeoJSON, setTunisiaGeoJSON] = useState(null);
 
-  const handleZoomIn = () => {
-    setZoomLevel((prevZoomLevel) => prevZoomLevel + 1);
-  };
+  useEffect(() => {
 
-  const handleZoomOut = () => {
-    setZoomLevel((prevZoomLevel) => prevZoomLevel - 1);
+    const fetchData = async () => {
+      const response = await fetch(data2);
+      const json = await response.json();
+      setTunisiaGeoJSON(json);
+    };
+
+    fetchData();
+  }, []);
+
+  if (!tunisiaGeoJSON) {
+    return null; // or some loading indicator
+  }
+
+  const tunisiaData = {
+    type: "FeatureCollection",
+    features: tunisiaGeoJSON.features,
   };
+  console.log(tunisiaGeoJSON.features[0].id);
 
   return (
-    <div style={{ width: "100%", height: "600px" }}>
-      <ResponsiveGeoMap
-        data={gadm41_TUN_1}
-        theme={theme}
-        features={gadm41_TUN_1.features}
-        margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
-        projectionTranslation={[0.5, 0.5]}
-        projectionRotation={[0, 0, 0]}
-        fillColor="#eeeeee"
-        borderWidth={0.5}
-        borderColor="#333333"
-        enableZoom={false}
-        animate={true}
-        motionStiffness={90}
-        motionDamping={15}
-        legends={
-          !isDashboard
-            ? [
-                {
-                  anchor: "bottom-left",
-                  direction: "column",
-                  justify: true,
-                  translateX: 20,
-                  translateY: -100,
-                  itemsSpacing: 0,
-                  itemWidth: 94,
-                  itemHeight: 18,
-                  itemDirection: "left-to-right",
-                  itemTextColor: colors.grey[100],
-                  itemOpacity: 0.85,
-                  symbolSize: 18,
-                  effects: [
-                    {
-                      on: "hover",
-                      style: {
-                        itemTextColor: "#ffffff",
-                        itemOpacity: 1,
-                      },
+    <ResponsiveChoropleth
+      data={data}
+      theme={{
+        axis: {
+          domain: {
+            line: {
+              stroke: colors.grey[100],
+            },
+          },
+          legend: {
+            text: {
+              fill: colors.grey[100],
+            },
+          },
+          ticks: {
+            line: {
+              stroke: colors.grey[100],
+              strokeWidth: 1,
+            },
+            text: {
+              fill: colors.grey[100],
+            },
+          },
+        },
+        legends: {
+          text: {
+            fill: "colors.grey[100]",
+          },
+        },
+      }}
+      features={tunisiaData.features}
+      margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+      domain={[0, 100]}
+      unknownColor="#666666"
+      label="properties.gouv_fr"
+      valueFormat=".2s"
+      projectionScale={isDashboard ? 1300 : 2500}
+      projectionTranslation={isDashboard ? [-0.15, 4.6] : [0.18, 3.5]}
+      projectionRotation={[0, 0, 0]}
+      borderWidth={1.5}
+      borderColor="#ffffff"
+      legends={
+        !isDashboard
+          ? [
+              {
+                anchor: "bottom-left",
+                direction: "column",
+                justify: true,
+                translateX: 20,
+                translateY: -100,
+                itemsSpacing: 0,
+                itemWidth: 94,
+                itemHeight: 18,
+                itemDirection: "left-to-right",
+                itemTextColor: colors.grey[100],
+                itemOpacity: 0.85,
+                symbolSize: 18,
+                effects: [
+                  {
+                    on: "hover",
+                    style: {
+                      itemTextColor: "#ffffff",
+                      itemOpacity: 1,
                     },
-                  ],
-                },
-              ]
-            : undefined
-        }
-        zoom={zoomLevel}
-        center={centerCoordinates}
-      />
-      <div style={{ position: "absolute", top: 10, right: 10 }}>
-        <IconButton onClick={handleZoomIn}>
-          <AddIcon />
-        </IconButton>
-        <IconButton onClick={handleZoomOut}>
-          <RemoveIcon />
-        </IconButton>
-      </div>
-    </div>
+                  },
+                ],
+              },
+            ]
+          : undefined
+      }
+    />
   );
 };
 

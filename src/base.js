@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 
 
 
+
 const firebaseConfig = {
     apiKey: "AIzaSyAXTDYnwEijgHwCllrkmye5ssSvR019zAk",
     authDomain: "medtour-test-b44b4.firebaseapp.com",
@@ -14,6 +15,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
 
 
 export default app;

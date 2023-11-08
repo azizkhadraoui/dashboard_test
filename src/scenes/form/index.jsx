@@ -3,12 +3,76 @@ import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../../components/Header";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
+import app from "../../base.js";
+
 
 const Form = () => {
   const isNonMobile = useMediaQuery("(min-width:600px)");
 
-  const handleFormSubmit = (values) => {
-    console.log(values);
+  const phoneRegExp =
+    /^((\+[1-9]{1,4}[ -]?)|(\([0-9]{2,3}\)[ -]?)|([0-9]{2,4})[ -]?)*?[0-9]{3,4}[ -]?[0-9]{3,4}$/;
+
+  const checkoutSchema = yup.object().shape({
+    firstName: yup.string().required("required"),
+    lastName: yup.string().required("required"),
+    email: yup.string().email("invalid email").required("required"),
+    contact: yup
+      .string()
+      .matches(phoneRegExp, "Phone number is not valid")
+      .required("required"),
+    age: yup.string().required("required"),
+    access: yup.string().required("required"),
+  });
+
+  const initialValues = {
+    name: "",
+    email: "",
+    phone: "",
+    age: "",
+    accessLevel: "",
+    num_client:"",
+    chiffre_affaire:"",
+  };
+
+  const handleFormSubmit = async (values) => {
+    try {
+      // Initialize Firebase Authentication and Firestore
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Generate a random password (for example purposes)
+      const generatedPassword = Math.random().toString().substring(8);
+      console.log(generatedPassword);
+
+      // Create user with email and generated password
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        values.email,
+        generatedPassword
+      );
+
+      // Access the user ID
+      const userId = userCredential.user.uid;
+
+      // Add user data to Firestore
+      const userDocRef = await addDoc(collection(db, "users"), {
+        name: values.firstName +" "+ values.lastName,
+        email: values.email,
+        phone: values.contact,
+        age: values.age,
+        accessLevel: values.access,
+        num_client:"0",
+        chiffre_affaire:"0",
+
+      });
+
+      console.log("User created with ID: ", userId);
+      console.log("User data added to Firestore with ID: ", userDocRef.id);
+    } catch (error) {
+      console.error("Error creating user:", error);
+    }
   };
 
   return (
@@ -93,26 +157,26 @@ const Form = () => {
                 fullWidth
                 variant="filled"
                 type="text"
-                label="Address 1"
+                label="Age"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.address1}
-                name="address1"
-                error={!!touched.address1 && !!errors.address1}
-                helperText={touched.address1 && errors.address1}
+                value={values.age}
+                name="age"
+                error={!!touched.age && !!errors.age}
+                helperText={touched.age && errors.age}
                 sx={{ gridColumn: "span 4" }}
               />
               <TextField
                 fullWidth
                 variant="filled"
                 type="text"
-                label="Address 2"
+                label="Role"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.address2}
-                name="address2"
-                error={!!touched.address2 && !!errors.address2}
-                helperText={touched.address2 && errors.address2}
+                value={values.access}
+                name="access"
+                error={!!touched.access && !!errors.access}
+                helperText={touched.acess && errors.access}
                 sx={{ gridColumn: "span 4" }}
               />
             </Box>
@@ -126,29 +190,6 @@ const Form = () => {
       </Formik>
     </Box>
   );
-};
-
-const phoneRegExp =
-  /^((\+[1-9]{1,4}[ -]?)|(\([0-9]{2,3}\)[ -]?)|([0-9]{2,4})[ -]?)*?[0-9]{3,4}[ -]?[0-9]{3,4}$/;
-
-const checkoutSchema = yup.object().shape({
-  firstName: yup.string().required("required"),
-  lastName: yup.string().required("required"),
-  email: yup.string().email("invalid email").required("required"),
-  contact: yup
-    .string()
-    .matches(phoneRegExp, "Phone number is not valid")
-    .required("required"),
-  address1: yup.string().required("required"),
-  address2: yup.string().required("required"),
-});
-const initialValues = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  contact: "",
-  address1: "",
-  address2: "",
 };
 
 export default Form;
