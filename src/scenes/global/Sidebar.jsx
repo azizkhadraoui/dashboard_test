@@ -16,6 +16,7 @@ import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutl
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
+import HistoryIcon from "@mui/icons-material/History";
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -133,23 +134,30 @@ const Sidebar = () => {
               Data
             </Typography>
             <Item
-              title="manager les utilisateur"
+              title="Manager les Utilisateur"
               to="/team"
               icon={<PeopleOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
-              title="clients"
+              title="Clients"
               to="/contacts"
               icon={<ContactsOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
-              title="payments"
+              title="Payments"
               to="/invoices"
               icon={<ReceiptOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Past Flights"
+              to="/pastflights"
+              icon={<HistoryIcon />}
               selected={selected}
               setSelected={setSelected}
             />
@@ -162,7 +170,7 @@ const Sidebar = () => {
               Pages
             </Typography>
             <Item
-              title="ajouter un profile"
+              title="Ajouter un Profile"
               to="/form"
               icon={<PersonOutlinedIcon />}
               selected={selected}
@@ -176,7 +184,7 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
             <Item
-              title="notes"
+              title="Notes"
               to="/faq"
               icon={<HelpOutlineOutlinedIcon />}
               selected={selected}

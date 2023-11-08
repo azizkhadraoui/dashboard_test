@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
@@ -22,6 +22,10 @@ const Contacts = () => {
       age--;
     }
     return age;
+  };
+
+  const capitalizeFirstLetter = (string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
   };
 
   useEffect(() => {
@@ -53,7 +57,11 @@ const Contacts = () => {
       },
       renderCell: (params) => (
         <Link to={`/profile/${params.row.id}`}>
-          {`${params.row.firstName} ${params.row.lastName}`}
+          <Typography color="white">
+            {`${capitalizeFirstLetter(
+              params.row.firstName
+            )} ${capitalizeFirstLetter(params.row.lastName)}`}
+          </Typography>
         </Link>
       ),
     },
