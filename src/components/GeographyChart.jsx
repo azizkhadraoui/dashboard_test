@@ -4,6 +4,7 @@ import { ResponsiveChoropleth } from "@nivo/geo";
 import { tokens } from "../theme";
 import { mockGeographyData as data } from "../data/mockData";
 import data2 from "../data/tunisiaGeoJSON.geojson"
+console.log(data);
 
 const GeographyChart = ({ isDashboard = false }) => {
   const theme = useTheme();
@@ -23,7 +24,7 @@ const GeographyChart = ({ isDashboard = false }) => {
   }, []);
 
   if (!tunisiaGeoJSON) {
-    return null; // or some loading indicator
+    return null; 
   }
 
   const tunisiaData = {

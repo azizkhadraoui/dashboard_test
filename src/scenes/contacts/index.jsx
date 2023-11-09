@@ -86,7 +86,7 @@ const Contacts = () => {
       flex: 1,
     },
     {
-      field: "address",
+      field: "deligation",
       headerName: "Address",
       flex: 1,
     },

@@ -1,17 +1,68 @@
+import React, { useEffect, useState } from 'react';
 import { useTheme } from "@mui/material";
 import { ResponsiveBar } from "@nivo/bar";
 import { tokens } from "../theme";
-import { mockBarData as data } from "../data/mockData";
+import { getFirestore,  getDocs,collection } from 'firebase/firestore';
+import app from "../base.js";
 
 const BarChart = ({ isDashboard = false }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const [sessionKeys, setSessionKeys] = useState([]);
+  const [data, setdata] = useState([]);
+  const db = getFirestore(app);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const usersRef = collection(db, 'sessions');
+      const snapshot = await getDocs(usersRef);
+      const rawData = snapshot.docs.map(doc => doc.data());
+      const titles = new Set(rawData.map(item => item.title));
+      const uniqueTitles = [...titles];
+      setSessionKeys(uniqueTitles);
+    }
+    fetchData();
+    
+  }, []);
+  useEffect(() => {
+    const fetchData = async () => {
+      const clientsRef = collection(db, 'clients');
+      const clientsSnapshot = await getDocs(clientsRef);
+    
+      const uniqueRabatteurs = {};
+    
+      for (const clientDoc of clientsSnapshot.docs) {
+        const clientData = clientDoc.data();
+        const flightsRef = collection(clientDoc.ref, 'flights');
+        const flightsSnapshot = await getDocs(flightsRef);
+    
+        const sellerName = clientData.from;
+    
+        if (!uniqueRabatteurs[sellerName]) {
+          uniqueRabatteurs[sellerName] = {};
+        }
+    
+        flightsSnapshot.docs.forEach(flightDoc => {
+          const { payment, product } = flightDoc.data();
+          uniqueRabatteurs[sellerName][product] = (uniqueRabatteurs[sellerName][product] || 0) + parseInt(payment, 10);
+        });
+      }
+    
+      const transformedData = Object.keys(uniqueRabatteurs).map(rabatteur => ({
+        rabatteur,
+        ...uniqueRabatteurs[rabatteur]
+      }));
+    
+      setdata(transformedData);
+    }
+    
+    fetchData();
+  }, []);
 
   return (
     <ResponsiveBar
       data={data}
       theme={{
-        // added
         axis: {
           domain: {
             line: {
@@ -39,8 +90,8 @@ const BarChart = ({ isDashboard = false }) => {
           },
         },
       }}
-      keys={["hot dog", "burger", "sandwich", "kebab", "fries", "donut"]}
-      indexBy="country"
+      keys={sessionKeys}
+      indexBy="rabatteur"
       margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
       padding={0.3}
       valueScale={{ type: "linear" }}
@@ -76,7 +127,7 @@ const BarChart = ({ isDashboard = false }) => {
         tickSize: 5,
         tickPadding: 5,
         tickRotation: 0,
-        legend: isDashboard ? undefined : "country", // changed
+        legend: isDashboard ? undefined : "rabatteur", // changed
         legendPosition: "middle",
         legendOffset: 32,
       }}
@@ -84,7 +135,7 @@ const BarChart = ({ isDashboard = false }) => {
         tickSize: 5,
         tickPadding: 5,
         tickRotation: 0,
-        legend: isDashboard ? undefined : "food", // changed
+        legend: isDashboard ? undefined : "sales", // changed
         legendPosition: "middle",
         legendOffset: -40,
       }}
@@ -121,7 +172,7 @@ const BarChart = ({ isDashboard = false }) => {
       ]}
       role="application"
       barAriaLabel={function (e) {
-        return e.id + ": " + e.formattedValue + " in country: " + e.indexValue;
+        return e.id + ": " + e.formattedValue + " in rabatteur: " + e.indexValue;
       }}
     />
   );

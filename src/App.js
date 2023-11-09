@@ -18,6 +18,7 @@ import Calendar from "./scenes/calendar";
 import firebase from 'firebase/app';
 import Profile from "./scenes/profile/index.jsx";
 import PastFlights from "./scenes/pastflights/index.jsx";
+import AddOffer from "./scenes/offers/index.jsx";
 
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
               <Route path="/geography" element={<Geography />} />
               <Route path='/profile/:id' element={<Profile/>}/>
               <Route path='/pastflights' element={<PastFlights/>}/>
+              <Route path='/addoffer' element={<AddOffer/>}/>
         </Routes>
       </main>
     </div>
