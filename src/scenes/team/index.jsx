@@ -19,18 +19,11 @@ const Team = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch emails from API
-        const response = await fetch("http://localhost:3001/api/getUserEmails");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const emails = await response.json();
-    
-        // Initialize Firestore with your own Firebase config
+
         const db = getFirestore(app);
     
         // Query Firestore to get additional data based on emails
-        const q = query(collection(db, "users"), where("email", "in", emails));
+        const q = query(collection(db, "users"));
         const querySnapshot = await getDocs(q);
     
         const fetchedData = [];

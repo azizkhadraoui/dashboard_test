@@ -12,10 +12,166 @@ import GeographyChart from "../../components/GeographyChart";
 import BarChart from "../../components/BarChart";
 import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
+import React, { useState, useEffect } from "react";
+import app from "../../base.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  deleteDoc,
+  doc,
+  setDoc,
+  query,
+  where,
+} from "firebase/firestore";
+
 
 const Dashboard = () => {
+  const [Revenue, setRevenue] = useState(0);
+  const [newClients, setNewClients] = useState({
+    count: 0,
+    progress: 0,
+    increase: 0,
+  })
+  const [newSales, setNewSales] = useState({
+    count: 0,
+    progress: 0,
+    increase: 0,
+  })
+  const overlayStyles = {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(128, 128, 128, 0.5)", // Semi-transparent grey color
+    backdropFilter: "blur(8px)", // Adjust the blur strength as needed
+  };
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+
+ 
+  useEffect(() => {
+    const fetchData = async () => {
+      const parseDate = (dateString) => {
+        const [day, month, year] = dateString.split('/').map(Number);
+        return new Date(year, month - 1, day); // Note: Month is zero-based in JavaScript Date
+      };
+      try {
+        const db = getFirestore(app);
+        const clientsCollection = collection(db, "clients");
+        const clientsSnapshot = await getDocs(clientsCollection);
+  
+        const newClientsData = [];
+        const newSalesData = [];
+        const paymentsData = [];
+  
+        const currentDate = new Date();
+        const oneDayAgo = new Date();
+        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+        let totalRevenue = 0;
+  
+        for (const clientDoc of clientsSnapshot.docs) {
+          const clientData = clientDoc.data();
+          const creationDate = new Date(clientData.creation_date);
+  
+          if (creationDate >= oneDayAgo) {
+            newClientsData.push(clientData);
+          }
+  
+          const clientId = clientDoc.id;
+          const paymentsCollection = collection(clientDoc.ref, "payments");
+          const paymentsQuery = query(paymentsCollection);
+          const paymentsSnapshot = await getDocs(paymentsQuery);
+  
+          
+
+          paymentsSnapshot.forEach((paymentDoc) => {
+            const paymentData = {
+              id: paymentDoc.id,
+              clientId,
+              name: clientData.firstName + " " + clientData.lastName,
+              from: clientData.from,
+              passport: clientData.passportNumber,
+              ...paymentDoc.data(),
+            };
+            paymentsData.push(paymentData);
+        
+            const valueString = paymentData.value || "0";
+            const valueNumber = parseInt(valueString, 10);
+            totalRevenue += valueNumber;
+        
+            const paymentDate = parseDate(paymentData.date);
+            if (paymentDate >= oneDayAgo) {
+              newSalesData.push(paymentData.value);
+            }
+          });
+        
+        }
+        
+        setRevenue(totalRevenue);
+        
+  
+        const newSalesCount = newSalesData.length;
+        const previousSalesCount = paymentsData.length - newSalesCount; 
+  
+        const newClientsCount = newClientsData.length;
+        const previousClientsCount = clientsSnapshot.size - newClientsCount;
+  
+        const progress = calculateProgress(newClientsCount, previousClientsCount);
+        const increase = calculateIncrease(newClientsCount, previousClientsCount);
+
+        const progress2 = calculateProgress(newSalesCount, previousSalesCount);
+        const increase2 = calculateIncrease(newSalesCount, previousSalesCount);
+  
+        setNewClients({
+          count: newClientsCount,
+          progress,
+          increase,
+        });
+
+        setNewSales({
+          count: newSalesCount,
+          progress2,
+          increase2,
+        });
+  
+        setInvoicesData(paymentsData);
+  
+        return paymentsData;
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+  
+    fetchData();
+  }, []);
+  
+  useEffect(() => {
+    console.log("Updated Revenue:", Revenue);
+    // Any other logic you want to execute after the state update
+  }, [Revenue]);
+  
+  
+
+
+  const calculateProgress = (newClientsCount, previousClientsCount) => {
+    return previousClientsCount > 0
+      ? newClientsCount / (newClientsCount + previousClientsCount)
+      : 0;
+  };
+
+  const calculateIncrease = (newClientsCount, previousClientsCount) => {
+    return previousClientsCount > 0
+      ? Math.round((newClientsCount / (newClientsCount + previousClientsCount)) * 100)
+      : 0;
+  };
+  console.log(newSales);
+
+
+
+  const [invoicesData, setInvoicesData] = useState([]);
 
   return (
     <Box m="20px">
@@ -31,10 +187,11 @@ const Dashboard = () => {
               fontSize: "14px",
               fontWeight: "bold",
               padding: "10px 20px",
+              
             }}
           >
             <DownloadOutlinedIcon sx={{ mr: "10px" }} />
-            Download Reports
+            telecharger les rapports
           </Button>
         </Box>
       </Box>
@@ -53,6 +210,8 @@ const Dashboard = () => {
           display="flex"
           alignItems="center"
           justifyContent="center"
+          position="relative" 
+          overflow="hidden"  
         >
           <StatBox
             title="12,361"
@@ -65,6 +224,7 @@ const Dashboard = () => {
               />
             }
           />
+          <div style={overlayStyles}></div>
         </Box>
         <Box
           gridColumn="span 3"
@@ -74,10 +234,10 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="431,225"
-            subtitle="Sales Obtained"
-            progress="0.50"
-            increase="+21%"
+            title={newSales.count}
+            subtitle="Ventes obtenues"
+            progress={newSales.progress2}
+            increase={"+"+newSales.increase2+"%"}
             icon={
               <PointOfSaleIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -93,10 +253,10 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="32,441"
-            subtitle="New Clients"
-            progress="0.30"
-            increase="+5%"
+            title={newClients.count}
+            subtitle="nouveau client"
+            progress={newClients.progress}
+            increase={"+"+newClients.increase+"%"}
             icon={
               <PersonAddIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -110,6 +270,8 @@ const Dashboard = () => {
           display="flex"
           alignItems="center"
           justifyContent="center"
+          position="relative" 
+          overflow="hidden"  
         >
           <StatBox
             title="1,325,134"
@@ -122,6 +284,7 @@ const Dashboard = () => {
               />
             }
           />
+          <div style={overlayStyles}></div>
         </Box>
 
         {/* ROW 2 */}
@@ -129,6 +292,8 @@ const Dashboard = () => {
           gridColumn="span 8"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
+          position="relative" 
+          overflow="hidden"  
         >
           <Box
             mt="25px"
@@ -150,7 +315,7 @@ const Dashboard = () => {
                 fontWeight="bold"
                 color={colors.greenAccent[500]}
               >
-                $59,342.32
+                {Revenue}
               </Typography>
             </Box>
             <Box>
@@ -163,6 +328,8 @@ const Dashboard = () => {
           </Box>
           <Box height="250px" m="-20px 0 0 0">
             <LineChart isDashboard={true} />
+            <div style={overlayStyles}></div>
+            
           </Box>
         </Box>
         <Box
@@ -180,12 +347,12 @@ const Dashboard = () => {
             p="15px"
           >
             <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recent Transactions
+              transaction recent
             </Typography>
           </Box>
-          {mockTransactions.map((transaction, i) => (
+          {invoicesData.map((transaction, i) => (
             <Box
-              key={`${transaction.txId}-${i}`}
+              key={`${transaction.id}-${i}`}
               display="flex"
               justifyContent="space-between"
               alignItems="center"
@@ -198,7 +365,7 @@ const Dashboard = () => {
                   variant="h5"
                   fontWeight="600"
                 >
-                  {transaction.txId}
+                  {transaction.name}
                 </Typography>
                 <Typography color={colors.grey[100]}>
                   {transaction.user}
@@ -210,7 +377,7 @@ const Dashboard = () => {
                 p="5px 10px"
                 borderRadius="4px"
               >
-                ${transaction.cost}
+                ${transaction.value}
               </Box>
             </Box>
           ))}
@@ -238,9 +405,8 @@ const Dashboard = () => {
               color={colors.greenAccent[500]}
               sx={{ mt: "15px" }}
             >
-              $48,352 revenue generated
+               {Revenue} DNT comme revenu
             </Typography>
-            <Typography>Includes extra misc expenditures and costs</Typography>
           </Box>
         </Box>
         <Box
@@ -253,7 +419,7 @@ const Dashboard = () => {
             fontWeight="600"
             sx={{ padding: "30px 30px 0 30px" }}
           >
-            Sales Quantity
+            quantite de vente
           </Typography>
           <Box height="250px" mt="-20px">
             <BarChart isDashboard={true} />
@@ -270,7 +436,7 @@ const Dashboard = () => {
             fontWeight="600"
             sx={{ marginBottom: "15px" }}
           >
-            Geography Based Traffic
+            distrubition geographique de traffic
           </Typography>
           <Box height="200px">
             <GeographyChart isDashboard={true} />

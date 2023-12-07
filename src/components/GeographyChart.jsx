@@ -2,18 +2,44 @@ import React, { useState, useEffect } from "react";
 import { useTheme } from "@mui/material";
 import { ResponsiveChoropleth } from "@nivo/geo";
 import { tokens } from "../theme";
+import data2 from "../data/tunisiaGeoJSON.geojson";
 import { mockGeographyData as data } from "../data/mockData";
-import data2 from "../data/tunisiaGeoJSON.geojson"
-console.log(data);
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import app from "../base.js";
 
 const GeographyChart = ({ isDashboard = false }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-
+  const [contacts, setContacts] = useState([]);
   const [tunisiaGeoJSON, setTunisiaGeoJSON] = useState(null);
+  const getFeatureIdByGouvFr = (gouvFr) => {
+    const features = tunisiaGeoJSON.features;
+    const matchingFeature = features.find(feature => feature.properties.gouv_fr === gouvFr);
+    return matchingFeature ? matchingFeature.id : null;
+  };
+  
+  // Example usage:
+  
+
 
   useEffect(() => {
+    const fetchData = async () => {
+      const db = getFirestore(app);
+      const contactsCollection = collection(db, 'clients');
 
+      try {
+        const querySnapshot = await getDocs(contactsCollection);
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setContacts(data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
     const fetchData = async () => {
       const response = await fetch(data2);
       const json = await response.json();
@@ -23,19 +49,37 @@ const GeographyChart = ({ isDashboard = false }) => {
     fetchData();
   }, []);
 
-  if (!tunisiaGeoJSON) {
+  if (!tunisiaGeoJSON || !contacts.length) {
     return null; 
   }
+
+  const delegationCounts = contacts.reduce((counts, client) => {
+    const delegation = client.deligation;
+
+    if (!counts[delegation]) {
+      counts[delegation] = 1;
+    } else {
+      counts[delegation]++;
+    }
+
+    return counts;
+  }, {});
+
+  const delegationList = Object.entries(delegationCounts).map(([delegation, count]) => ({
+    id: getFeatureIdByGouvFr(delegation),
+    value:count,
+  }));
 
   const tunisiaData = {
     type: "FeatureCollection",
     features: tunisiaGeoJSON.features,
   };
-  console.log(tunisiaGeoJSON.features[0].id);
+  console.log(delegationList);
+
 
   return (
     <ResponsiveChoropleth
-      data={data}
+      data={delegationList}
       theme={{
         axis: {
           domain: {

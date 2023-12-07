@@ -17,7 +17,7 @@ const Profile = () => {
   const { id } = useParams();
   const [contact, setContact] = useState(null);
   const [contacts, setContacts] = useState([]);
-  const [profilePic, setProfilePic] = useState(null); // Add a separate state for profilePic
+  const [profilePic, setProfilePic] = useState(null);
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -31,14 +31,14 @@ const Profile = () => {
         if (docSnapshot.exists()) {
           const contactData = docSnapshot.data();
           setContact(contactData);
-          console.log(contactData);
+
           const storage = getStorage(app);
           const photoRef = ref(
             storage,
             `images/image/${contactData.passportNumber}.jpg`
           );
           const downloadURL = await getDownloadURL(photoRef);
-          setProfilePic(downloadURL); // Set profilePic separately
+          setProfilePic(downloadURL); 
         } else {
           console.log("No such document!");
         }
@@ -52,39 +52,43 @@ const Profile = () => {
 
   useEffect(() => {
     const db = getFirestore(app);
-    const contactsCollection = collection(db, "flights");
+    const clientRef = doc(db, "clients", id);
+    const flightsCollection = collection(clientRef, "flights"); // Access the "flights" collection inside the "client" document.
 
     const fetchData = async () => {
       try {
-        const querySnapshot = await getDocs(contactsCollection);
+        const querySnapshot = await getDocs(flightsCollection);
         const data = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
         setContacts(data);
+        console.log(data);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
 
     fetchData();
-  }, []);
+  }, [id]);
+
+ 
 
   const columns = [
     { field: "id", headerName: "ID", flex: 1 },
     {
-      field: "date",
+      field: "flight_date",
       headerName: "Date",
       flex: 1,
     },
     {
-      field: "empty_seats",
-      headerName: "Empty Seats",
+      field: "product",
+      headerName: "type",
       flex: 1,
     },
     {
-      field: "type",
-      headerName: "Provider",
+      field: "payment",
+      headerName: "montant payer",
       flex: 1,
     },
   ];

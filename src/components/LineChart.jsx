@@ -1,15 +1,64 @@
+import React, { useEffect, useState } from 'react';
 import { ResponsiveLine } from "@nivo/line";
 import { useTheme } from "@mui/material";
 import { tokens } from "../theme";
-import { mockLineData as data } from "../data/mockData";
+import { mockLineData as data2 } from "../data/mockData";
+import { getFirestore,  getDocs,collection } from 'firebase/firestore';
+import app from "../base.js";
+
+
 
 const LineChart = ({ isCustomLineColors = false, isDashboard = false }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const db = getFirestore(app);
+  const [data, setdata] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+        const clientsRef = collection(db, 'clients');
+        const clientsSnapshot = await getDocs(clientsRef);
+
+        const uniqueRabatteurs = {};
+
+        for (const clientDoc of clientsSnapshot.docs) {
+            const clientData = clientDoc.data();
+            const flightsRef = collection(clientDoc.ref, 'flights');
+            const flightsSnapshot = await getDocs(flightsRef);
+
+            const sellerName = clientData.from;
+
+            if (!uniqueRabatteurs[sellerName]) {
+                uniqueRabatteurs[sellerName] = {
+                    data: []
+                };
+            }
+
+            flightsSnapshot.docs.forEach(flightDoc => {
+                const { payment, flight_date } = flightDoc.data();
+                uniqueRabatteurs[sellerName].data.push({
+                    x: flight_date, // Use sellerName as x value
+                    y: parseInt(payment, 10)
+                });
+            });
+        }
+
+        const transformedData = Object.keys(uniqueRabatteurs).map(rabatteur => ({
+            id: rabatteur,
+            data: uniqueRabatteurs[rabatteur].data
+        }));
+        setdata(transformedData);
+
+        //console.log(transformedData);
+    }
+
+    fetchData();
+}, [db, colors]);
+
+
 
   return (
     <ResponsiveLine
-      data={data}
+      data={data2}
       theme={{
         axis: {
           domain: {
@@ -43,7 +92,7 @@ const LineChart = ({ isCustomLineColors = false, isDashboard = false }) => {
           },
         },
       }}
-      colors={isDashboard ? { datum: "color" } : { scheme: "nivo" }} // added
+      colors={isDashboard ? { datum: "color" } : { scheme: "category10" }}
       margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
       xScale={{ type: "point" }}
       yScale={{

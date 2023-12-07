@@ -17,6 +17,8 @@ import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import HistoryIcon from "@mui/icons-material/History";
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -173,6 +175,13 @@ const Sidebar = () => {
               title="Ajouter un Profile"
               to="/form"
               icon={<PersonOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Ajouter un offre"
+              to="/addoffer"
+              icon={<AddCircleOutlineIcon />}
               selected={selected}
               setSelected={setSelected}
             />
