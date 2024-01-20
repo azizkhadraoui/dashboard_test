@@ -157,7 +157,7 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
             <Item
-              title="Past Flights"
+              title="les packs"
               to="/pastflights"
               icon={<HistoryIcon />}
               selected={selected}
@@ -193,7 +193,7 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
             <Item
-              title="Notes"
+              title="Commentaires"
               to="/faq"
               icon={<HelpOutlineOutlinedIcon />}
               selected={selected}

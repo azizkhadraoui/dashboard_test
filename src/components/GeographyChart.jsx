@@ -12,15 +12,13 @@ const GeographyChart = ({ isDashboard = false }) => {
   const colors = tokens(theme.palette.mode);
   const [contacts, setContacts] = useState([]);
   const [tunisiaGeoJSON, setTunisiaGeoJSON] = useState(null);
-  const getFeatureIdByGouvFr = (gouvFr) => {
+
+  // Updated to use circo_id and circo_na_1
+  const getFeatureIdByCirco = (circoName) => {
     const features = tunisiaGeoJSON.features;
-    const matchingFeature = features.find(feature => feature.properties.gouv_fr === gouvFr);
+    const matchingFeature = features.find(feature => feature.properties.circo_na_1 === circoName);
     return matchingFeature ? matchingFeature.id : null;
   };
-  
-  // Example usage:
-  
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,6 +42,7 @@ const GeographyChart = ({ isDashboard = false }) => {
       const response = await fetch(data2);
       const json = await response.json();
       setTunisiaGeoJSON(json);
+      console.log(tunisiaGeoJSON);
     };
 
     fetchData();
@@ -53,8 +52,10 @@ const GeographyChart = ({ isDashboard = false }) => {
     return null; 
   }
 
+  // Updated to match new data structure
   const delegationCounts = contacts.reduce((counts, client) => {
-    const delegation = client.deligation;
+    const delegation = client.deligation; // Make sure this matches your data
+    //console.log(client.deligation);
 
     if (!counts[delegation]) {
       counts[delegation] = 1;
@@ -65,22 +66,35 @@ const GeographyChart = ({ isDashboard = false }) => {
     return counts;
   }, {});
 
+  // Updated to match new data structure
   const delegationList = Object.entries(delegationCounts).map(([delegation, count]) => ({
-    id: getFeatureIdByGouvFr(delegation),
-    value:count,
+    id: getFeatureIdByCirco(delegation),
+    value: count,
   }));
+  //console.log(delegationList);
 
   const tunisiaData = {
     type: "FeatureCollection",
-    features: tunisiaGeoJSON.features,
+    features: tunisiaGeoJSON.features.map(feature => ({
+      ...feature,
+      id: feature.id
+    }))
   };
-  console.log(delegationList);
 
+  console.log(delegationList);
+  console.log(tunisiaData.features)
 
   return (
     <ResponsiveChoropleth
       data={delegationList}
       theme={{
+        tooltip: {
+          container: {
+            background: 'white',
+            color: 'black',
+            fontSize: '15px',
+          },
+        },
         axis: {
           domain: {
             line: {
@@ -104,15 +118,16 @@ const GeographyChart = ({ isDashboard = false }) => {
         },
         legends: {
           text: {
-            fill: "colors.grey[100]",
+            fill: colors.grey[100],
           },
         },
       }}
       features={tunisiaData.features}
-      margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+      margin={{ top: 0, right: 0,
+      bottom: 0, left: 0 }}
       domain={[0, 100]}
       unknownColor="#666666"
-      label="properties.gouv_fr"
+      label="properties.circo_na_1"
       valueFormat=".2s"
       projectionScale={isDashboard ? 1300 : 2500}
       projectionTranslation={isDashboard ? [-0.15, 4.6] : [0.18, 3.5]}

@@ -28,41 +28,58 @@ const BarChart = ({ isDashboard = false }) => {
     const fetchData = async () => {
       const clientsRef = collection(db, 'clients');
       const clientsSnapshot = await getDocs(clientsRef);
-    
+  
       const uniqueRabatteurs = {};
-    
+  
+      // Fetch the user names from Firestore 'users' collection
+      const userNames = {};
+      const usersRef = collection(db, 'users');
+      const usersSnapshot = await getDocs(usersRef);
+      usersSnapshot.docs.forEach(userDoc => {
+        const userData = userDoc.data();
+        userNames[userData.email] = userData.name; // Assuming 'email' and 'name' are fields in 'users' collection
+      });
+  
       for (const clientDoc of clientsSnapshot.docs) {
         const clientData = clientDoc.data();
         const flightsRef = collection(clientDoc.ref, 'flights');
         const flightsSnapshot = await getDocs(flightsRef);
-    
-        const sellerName = clientData.from;
-    
-        if (!uniqueRabatteurs[sellerName]) {
-          uniqueRabatteurs[sellerName] = {};
+  
+        const sellerEmail = clientData.from;
+  
+        if (!uniqueRabatteurs[sellerEmail]) {
+          uniqueRabatteurs[sellerEmail] = {};
         }
-    
+  
         flightsSnapshot.docs.forEach(flightDoc => {
           const { payment, product } = flightDoc.data();
-          uniqueRabatteurs[sellerName][product] = (uniqueRabatteurs[sellerName][product] || 0) + parseInt(payment, 10);
+          uniqueRabatteurs[sellerEmail][product] = (uniqueRabatteurs[sellerEmail][product] || 0) + parseInt(payment, 10);
         });
       }
-    
-      const transformedData = Object.keys(uniqueRabatteurs).map(rabatteur => ({
-        rabatteur,
-        ...uniqueRabatteurs[rabatteur]
+  
+      const transformedData = Object.keys(uniqueRabatteurs).map(rabatteurEmail => ({
+        rabatteur: userNames[rabatteurEmail] || rabatteurEmail, // Replace email with name, fallback to email if name not found
+        ...uniqueRabatteurs[rabatteurEmail]
       }));
-    
+  
       setdata(transformedData);
+      console.log(transformedData);
     }
-    
+  
     fetchData();
   }, []);
+  
 
   return (
     <ResponsiveBar
       data={data}
       theme={{
+        tooltip: {
+          container: {
+            background: 'white',
+            color: 'black',
+            fontSize: '15px',
+          }},
         axis: {
           domain: {
             line: {

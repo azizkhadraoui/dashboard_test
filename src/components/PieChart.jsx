@@ -14,6 +14,12 @@ const PieChartComponent = ({ data }) => {
     <ResponsivePie
       data={data}
       theme={{
+        tooltip: {
+          container: {
+            background: 'white',
+            color: 'black',
+            fontSize: '15px',
+          }},
         axis: {
           domain: {
             line: {

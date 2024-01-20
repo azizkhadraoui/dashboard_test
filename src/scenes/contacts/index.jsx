@@ -3,7 +3,7 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import { useTheme } from "@mui/material";
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import React, { useState, useEffect } from 'react';
 import app from "../../base.js";
 import {Link} from "react-router-dom"
@@ -32,11 +32,38 @@ const Contacts = () => {
     const db = getFirestore(app);
     const contactsCollection = collection(db, 'clients');
 
+    const getName = async (userEmail) => {
+      try {
+        const usersCollection = collection(db, 'users');
+        const q = query(usersCollection, where('email', '==', userEmail));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          return userData.name; // Assuming the user has a 'name' field
+        } else {
+          return ''; // Return an empty string if no user is found
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        return ''; // Return an empty string on error
+      }
+    };
+
     const fetchData = async () => {
       try {
         const querySnapshot = await getDocs(contactsCollection);
         const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setContacts(data);
+
+        // Update the 'from' field with the associated name
+        const updatedData = await Promise.all(
+          data.map(async (client) => ({
+            ...client,
+            from: await getName(client.from),
+          }))
+        );
+
+        setContacts(updatedData);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -57,7 +84,7 @@ const Contacts = () => {
       },
       renderCell: (params) => (
         <Link to={`/profile/${params.row.id}`}>
-          <Typography color="white">
+          <Typography color={colors.primary[100]}>
             {`${capitalizeFirstLetter(
               params.row.firstName
             )} ${capitalizeFirstLetter(params.row.lastName)}`}
@@ -79,6 +106,7 @@ const Contacts = () => {
       field: "from",
       headerName: "Origin",
       flex: 1,
+      valueGetter: (params) => params.row.from,
     },
     {
       field: "passportNumber",

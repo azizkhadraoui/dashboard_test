@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { Routes, Route } from "react-router-dom";
-import{ColorModeContext,colorMode, useMode} from "./theme.js"
-import{CssBaseline, ThemeProvider} from "@mui/material"
-import { Topbar } from './scenes/global/Topbar';
+import React from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom"; 
+import { AuthProvider } from "./Auth";
+import PrivateRoute from "./PrivateRoute";
+import { ColorModeContext, useMode } from "./theme.js";
+import { CssBaseline, ThemeProvider } from "@mui/material";
+import { Topbar } from "./scenes/global/Topbar";
 import Dashboard from "./scenes/dashboard";
-import Sidebar from './scenes/global/Sidebar';
+import Sidebar from "./scenes/global/Sidebar";
 import Team from "./scenes/team";
 import Contacts from "./scenes/contacts";
 import Invoices from "./scenes/invoices";
@@ -18,39 +20,60 @@ import Calendar from "./scenes/calendar";
 import Profile from "./scenes/profile/index.jsx";
 import PastFlights from "./scenes/pastflights/index.jsx";
 import AddOffer from "./scenes/offers/index.jsx";
+import Login from "./scenes/login";
 
 
 function App() {
   const [theme, colorMode] = useMode();
+  const navigate = useNavigate();
+  const currentPath = window.location.pathname;
+
+  // Determine whether to show the top and sidebar based on the current path
+  const showTopbarAndSidebar = currentPath !== "/login";
+
   return (
-    <ColorModeContext.Provider value={colorMode}> 
-    <ThemeProvider theme={theme}>
-      <CssBaseline/>
-    <div className="app">
-      <Sidebar/>
-      <main className="content">
-        <Topbar/>
-        <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/team" element={<Team />} />
-              <Route path="/contacts" element={<Contacts />} />
-              <Route path="/invoices" element={<Invoices />} />
-              <Route path="/form" element={<Form />} />
-              <Route path="/bar" element={<Bar />} />
-              <Route path="/pie" element={<Pie />} />
-              <Route path="/line" element={<Line />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/geography" element={<Geography />} />
-              <Route path='/profile/:id' element={<Profile/>}/>
-              <Route path='/pastflights' element={<PastFlights/>}/>
-              <Route path='/addoffer' element={<AddOffer/>}/>
-        </Routes>
-      </main>
-    </div>
-    </ThemeProvider>
-    </ColorModeContext.Provider>
+    <AuthProvider>
+      <ColorModeContext.Provider value={colorMode}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <div className="app">
+            {showTopbarAndSidebar && <Sidebar />}
+            <main className={currentPath === "/login" ? "content centered-content" : "content"}>
+              {showTopbarAndSidebar && <Topbar />}
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+                <Route path="team" element={<PrivateRoute><Team /></PrivateRoute>} />
+                <Route path="contacts" element={<PrivateRoute><Contacts /></PrivateRoute>} />
+                <Route path="invoices" element={<PrivateRoute><Invoices /></PrivateRoute>} />
+                <Route path="bar" element={<PrivateRoute><Bar /></PrivateRoute>} />
+                <Route path="form" element={<PrivateRoute><Form /></PrivateRoute>} />
+                <Route path="line" element={<PrivateRoute><Line /></PrivateRoute>} />
+                <Route path="pie" element={<PrivateRoute><Pie /></PrivateRoute>} />
+                <Route path="faq" element={<PrivateRoute><FAQ /></PrivateRoute>} />
+                <Route path="calendar" element={<PrivateRoute><Calendar /></PrivateRoute>} />
+                <Route path="geography" element={<PrivateRoute><Geography /></PrivateRoute>} />
+                <Route
+                  path="profile/:id"
+                  element={<PrivateRoute><Profile /></PrivateRoute>}
+                />
+                <Route
+                  path="pastflights"
+                  element={<PrivateRoute><PastFlights /></PrivateRoute>}
+                />
+                <Route
+                  path="addoffer"
+                  element={<PrivateRoute><AddOffer /></PrivateRoute>}
+                />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </main>
+          </div>
+        </ThemeProvider>
+      </ColorModeContext.Provider>
+    </AuthProvider>
   );
 }
 
 export default App;
+

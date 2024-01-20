@@ -38,7 +38,7 @@ const FAQ = () => {
 
   return (
     <Box m="20px">
-      <Header title="FAQ" subtitle="Frequently Asked Questions Page" />
+      <Header title="commentaire" subtitle="les commentaire des utilisateurs" />
 
       {memos.map(memo => (
         <Accordion key={memo.userId} defaultExpanded>
