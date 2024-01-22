@@ -37,12 +37,12 @@ const PastSessions = () => {
     returnDate: "", // Add returnDate field
     flightCompany: "", // Add flightCompany field
   });
-  
+
   const [flights, setFlights] = useState([]);
   const [selectedAction, setSelectedAction] = useState("");
   const [selectedTitle, setSelectedTitle] = useState("");
   const [editingFlight, setEditingFlight] = useState(null);
-  
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -88,12 +88,11 @@ const PastSessions = () => {
     if (openActionPopup || openFlightsPopup) {
       handleClosePopup();
     }
-  
+
     setSelectedRows([row.id]);
     setOpenActionPopup(true);
     setSelectedTitle(row.title);
   };
-  
 
   const handleClosePopup = () => {
     setOpenActionPopup(false);
@@ -152,7 +151,7 @@ const PastSessions = () => {
     try {
       const db = getFirestore(app);
       const flightsCollection = collection(db, "flights");
-  
+
       const newDocRef = doc(flightsCollection);
       await setDoc(newDocRef, {
         type: selectedTitle,
@@ -161,20 +160,19 @@ const PastSessions = () => {
         return_date: formData.returnDate, // Add return_date field
         flight_company: formData.flightCompany, // Add flight_company field
       });
-  
+
       const updatedQuerySnapshot = await getDocs(flightsCollection);
       const data = updatedQuerySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-  
+
       setFlights(data);
       handleClosePopup();
     } catch (error) {
       console.error("Error adding flights:", error);
     }
   };
-  
 
   const handleOpenEditFlightsPopup = (flight) => {
     setEditingFlight(flight);
@@ -187,7 +185,7 @@ const PastSessions = () => {
       const db = getFirestore(app);
       const flightsCollection = collection(db, "flights");
       const docRef = doc(flightsCollection, editingFlight.id);
-  
+
       await setDoc(docRef, {
         type: selectedTitle,
         date: formData.date,
@@ -195,20 +193,19 @@ const PastSessions = () => {
         return_date: formData.returnDate, // Add return_date field
         flight_company: formData.flightCompany, // Add flight_company field
       });
-  
+
       const querySnapshot = await getDocs(flightsCollection);
       const data = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-  
+
       setFlights(data);
       handleClosePopup();
     } catch (error) {
       console.error("Error editing flights:", error);
     }
   };
-  
 
   const handleDeleteFlight = async (flightId) => {
     try {
@@ -223,7 +220,6 @@ const PastSessions = () => {
         ...doc.data(),
       }));
       setFlights(data);
-      
     } catch (error) {
       console.error("Error deleting flight:", error);
     }
@@ -317,50 +313,65 @@ const PastSessions = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openFlightsPopup} onClose={handleClosePopup} maxWidth="md" fullWidth>
-  <DialogTitle>les vols de {selectedTitle}</DialogTitle>
-  <DialogContent>
-    <ul>
-      {flights.map((flight) => (
-        <li key={flight.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-          <div>
-            <span>Date: {flight.date} - Capacité: {flight.empty_seats}</span>
-            {flight.return_date && <span> - Return Date: {flight.return_date}</span>}
-            {flight.flight_company && <span> - Flight Company: {flight.flight_company}</span>}
-          </div>
-          <div>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => handleOpenEditFlightsPopup(flight)}
-            >
-              changer
-            </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => handleDeleteFlight(flight.id)}
-            >
-              supprimer
-            </Button>
-          </div>
-        </li>
-      ))}
-    </ul>
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={handleClosePopup} color="primary">
-      fermer
-    </Button>
-  </DialogActions>
-</Dialog>
+      <Dialog
+        open={openFlightsPopup}
+        onClose={handleClosePopup}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>les vols de {selectedTitle}</DialogTitle>
+        <DialogContent>
+          <ul>
+            {flights.map((flight) => (
+              <li
+                key={flight.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "10px",
+                }}
+              >
+                <div>
+                  <span>
+                    Date: {flight.date} - Capacité: {flight.empty_seats}
+                  </span>
+                  {flight.return_date && (
+                    <span> - Return Date: {flight.return_date}</span>
+                  )}
+                  {flight.flight_company && (
+                    <span> - Flight Company: {flight.flight_company}</span>
+                  )}
+                </div>
+                <div>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={() => handleOpenEditFlightsPopup(flight)}
+                  >
+                    changer
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={() => handleDeleteFlight(flight.id)}
+                  >
+                    supprimer
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClosePopup} color="primary">
+            fermer
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-
-
-
-
-
-      {(selectedAction === "add flights" || selectedAction === "edit flights") && (
+      {(selectedAction === "add flights" ||
+        selectedAction === "edit flights") && (
         <Dialog open={openActionPopup} onClose={handleClosePopup}>
           <DialogTitle>
             {selectedAction === "add flights" ? "Add Flights" : "Edit Flights"}
@@ -386,25 +397,24 @@ const PastSessions = () => {
               }
             />
             <TextField
-            label="Date de retour"
-            type="date"
-            fullWidth
-            value={formData.returnDate}
-            onChange={(e) =>
-              setFormData({ ...formData, returnDate: e.target.value })
-            }
-            sx={{ marginBottom: 2 }}
-          />
-            <TextField
-            label="Flight Company"
-            fullWidth
-            value={formData.flightCompany}
-            onChange={(e) =>
-              setFormData({ ...formData, flightCompany: e.target.value })
-            }
-            sx={{ marginBottom: 2 }}
+              label="Date de retour"
+              type="date"
+              fullWidth
+              value={formData.returnDate}
+              onChange={(e) =>
+                setFormData({ ...formData, returnDate: e.target.value })
+              }
+              sx={{ marginBottom: 2 }}
             />
-
+            <TextField
+              label="Flight Company"
+              fullWidth
+              value={formData.flightCompany}
+              onChange={(e) =>
+                setFormData({ ...formData, flightCompany: e.target.value })
+              }
+              sx={{ marginBottom: 2 }}
+            />
           </DialogContent>
           <DialogActions>
             <Button

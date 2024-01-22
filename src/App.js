@@ -21,6 +21,7 @@ import Profile from "./scenes/profile/index.jsx";
 import PastFlights from "./scenes/pastflights/index.jsx";
 import AddOffer from "./scenes/offers/index.jsx";
 import Login from "./scenes/login";
+import TabsOpen from "./scenes/tabs/index.jsx";
 
 
 function App() {
@@ -66,6 +67,7 @@ function App() {
                   element={<PrivateRoute><AddOffer /></PrivateRoute>}
                 />
                 <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="/tab" element={<TabsOpen/>} />
               </Routes>
             </main>
           </div>
