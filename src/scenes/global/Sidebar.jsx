@@ -163,6 +163,13 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
+            <Item
+              title="tabs"
+              to="/tab"
+              icon={<HistoryIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
 
             <Typography
               variant="h6"
