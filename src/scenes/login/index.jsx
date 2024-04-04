@@ -59,7 +59,8 @@ function Login() {
             border: '1px solid #ccc',
             borderRadius: '4px',
             width: '100%',
-            fontSize: '16px'
+            fontSize: '16px',
+            color: 'black'
           }}
           required
         />
@@ -74,7 +75,8 @@ function Login() {
             border: '1px solid #ccc',
             borderRadius: '4px',
             width: '100%',
-            fontSize: '16px'
+            fontSize: '16px',
+            color: 'black'
           }}
           required
         />

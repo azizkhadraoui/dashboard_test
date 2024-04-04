@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { Box, Typography, Paper } from "@mui/material";
-import { Tabs } from "flowbite-react";
+import React, { useEffect, useState } from "react";
+import { Box, Typography, Paper, Tab } from "@mui/material";
+import { TabContext, TabList, TabPanel } from "@mui/lab";
 import { useTheme } from "@mui/material";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
@@ -8,16 +8,17 @@ import {
   getFirestore,
   collection,
   query,
-  where,
   getDocs,
-} from "firebase/firestore";
+  where} from "firebase/firestore";
 import app from "../../base.js";
 
 const TabsOpen = () => {
-  const [value, setValue] = useState(0);
+  const [sessionValue, setSessionValue] = useState(0);
+  const [flightValue, setFlightValue] = useState(0);
   const [sessions, setSessions] = useState([]);
   const [flights, setFlights] = useState([]);
-  const [flightTabIndex, setFlightTabIndex] = useState(0);
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState(""); // State for selected user ID
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -48,7 +49,7 @@ const TabsOpen = () => {
         const flightsCollection = collection(db, "flights");
         const q = query(
           flightsCollection,
-          where("type", "==", sessions[value].title)
+          where("type", "==", sessions[sessionValue]?.title)
         );
 
         try {
@@ -65,59 +66,107 @@ const TabsOpen = () => {
     };
 
     fetchFlights();
-  }, [value, sessions]);
+  }, [sessionValue, sessions]);
 
-  const handleTabChange = (event, newValue) => {
-    setValue(newValue);
-    setFlightTabIndex(0);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const db = getFirestore(app);
+      const usersCollection = collection(db, "users");
+
+      try {
+        const querySnapshot = await getDocs(usersCollection);
+        const usersData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setUsers(usersData);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  const handleSessionTabChange = (event, newValue) => {
+    setSessionValue(newValue);
+    setFlightValue(0); // Reset flight tab index when session changes
   };
 
-  const handleFlightTabChange = (event, newValue) => {
-    setFlightTabIndex(newValue);
+  const handleFlightTabChange = (newValue) => {
+    setFlightValue(newValue);
+  };
+
+  const handleUserChange = (event) => {
+    setSelectedUserId(event.target.value);
   };
 
   return (
     <Box sx={{ padding: "20px", backgroundColor: colors.background }}>
       <Header title="CLIENTS" subtitle="Liste des client" />
       <Paper
-  elevation={3}
-  sx={{ marginTop:  3, padding: "20px", borderRadius:  2, borderBottom: "1px solid gray", backgroundColor: "white" }}
->
-  <Tabs
-    value={value}
-    onChange={handleTabChange}
-    className="border-b border-gray-200"
-  >
-    {sessions.map((session, index) => (
-      <Tabs.Item
-        key={index}
-        title={session.title}
-        className="py-2 px-4 hover:bg-gray-100"
+        elevation={3}
+        sx={{
+          marginTop: 3,
+          padding: "20px",
+          borderRadius: 2,
+          borderBottom: "1px solid gray",
+          backgroundColor: "white",
+        }}
       >
-        <Typography variant="body1" color="black" sx={{ margin: "20px   0" }}>
-          {`Content for ${session.name}`}
-        </Typography>
-        <Tabs
-          value={flightTabIndex}
-          onChange={handleFlightTabChange}
-          className="mt-4 border-b border-gray-200"
-        >
-          {flights.filter(flight => flight.type === session.title).map((flight, fIndex) => (
-            <Tabs.Item
-              key={fIndex}
-              title={flight.name}
-              className="py-2 px-4 hover:bg-gray-100"
-            >
-              <Paper elevation={3} sx={{ marginTop:   3, padding: "20px", borderRadius:   2 }}>
-                <div>{flight.content}</div>
-              </Paper>
-            </Tabs.Item>
-          ))}
-        </Tabs>
-      </Tabs.Item>
-    ))}
-  </Tabs>
-</Paper>
+        <TabContext value={sessionValue}>
+          <TabList
+            onChange={handleSessionTabChange}
+            aria-label="sessions"
+            className="border-b border-gray-200"
+          >
+            {sessions.map((session, index) => (
+              <Tab
+                key={session.id} // Use a unique identifier as key
+                label={session.title}
+                className="border-b border-gray-200"
+                value={index}
+              />
+            ))}
+          </TabList>
+          {flights.length > 0 && (
+            <TabContext value={flightValue}>
+              <TabList
+                onChange={(event, newValue) => handleFlightTabChange(newValue)}
+                aria-label="flights"
+                className="border-b border-gray-200"
+                value={flightValue}
+              >
+                {flights.map((flight, fIndex) => (
+                  <Tab
+                    key={flight.id} // Use a unique identifier as key
+                    label={flight.date}
+                    className="border-b border-gray-200"
+                    value={fIndex}
+                  />
+                ))}
+              </TabList>
+              <TabPanel>
+                <Paper elevation={3} sx={{ marginTop: 3, padding: "20px", borderRadius: 2 }}>
+                  <Typography variant="body1" color="black" sx={{ margin: "20px 0" }}>
+                    {flights[flightValue]?.content}
+                  </Typography>
+                </Paper>
+              </TabPanel>
+            </TabContext>
+          )}
+          <TabPanel>
+            <select value={selectedUserId} onChange={handleUserChange}>
+              <option value="">Select User</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name}
+                </option>
+              ))}
+            </select>
+          </TabPanel>
+        </TabContext>
+      </Paper>
     </Box>
   );
 };
