@@ -10,6 +10,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Button,
 } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import { useTheme } from "@mui/material";
@@ -33,6 +34,8 @@ const TabsOpen = () => {
   const [selectedUserId, setSelectedUserId] = useState(""); // State for selected user ID
   const [activeTab, setActiveTab] = useState("0"); // Initialize as string
   const [usersByFlightDate, setUsersByFlightDate] = useState({});
+  const [counters, setCounters] = useState({}); // State to hold counter values for each user
+  
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -81,81 +84,69 @@ const TabsOpen = () => {
 
     fetchFlights();
   }, [sessionValue, sessions]);
-
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchAllUsers = async () => {
       const db = getFirestore(app);
       const usersCollection = collection(db, "users");
-
+    
       try {
         const querySnapshot = await getDocs(usersCollection);
         const usersData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
+    
+        // Update the users state with all users data
         setUsers(usersData);
+        //console.log(usersData);
       } catch (error) {
         console.error("Error fetching users:", error);
       }
     };
+    
+    // Fetch all users when component mounts
+    fetchAllUsers();
+  }, []); // Empty dependency array ensures it only runs once on component mount
+  
+  console.log(users); // Add this line to check if usersData is being set correctly outside of useEffect
+  
+  
 
-    fetchUsers();
-  }, []);
 
-  useEffect(() => {
-    // Fetch users by flight date and store them in usersByFlightDate
-    const fetchUsersByFlightDate = async () => {
-      const db = getFirestore(app);
-      const usersCollection = collection(db, "users");
-
-      // Iterate over each flight to fetch users for that flight date
-      for (const flight of flights) {
-        const q = query(
-          usersCollection,
-          where("flight_date", "==", flight.date)
-        );
-
-        try {
-          const querySnapshot = await getDocs(q);
-          const usersData = querySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-
-          // Update usersByFlightDate with users for the current flight date
-          setUsersByFlightDate((prevState) => ({
-            ...prevState,
-            [flight.date]: usersData,
-          }));
-        } catch (error) {
-          console.error(
-            `Error fetching users for flight date ${flight.date}:`,
-            error
-          );
-        }
-      }
-    };
-
-    if (flights.length > 0) {
-      fetchUsersByFlightDate();
-    }
-  }, [flights]);
+  // Empty dependency array ensures it only runs once on component mount
+  
 
   const handleSessionTabChange = useCallback((event, newValue) => {
     setSessionValue(newValue);
     setFlightValue(0); // Reset flight tab index when session changes
   }, []);
 
-  const handleFlightTabChange = useCallback((newValue) => {
-    setFlightValue(newValue);
-  }, []);
+
 
   const handleUserChange = useCallback((event) => {
     setSelectedUserId(event.target.value);
   }, []);
+
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue.toString()); // Convert to string
   };
+  
+  
+  // Function to handle incrementing the counter for a specific user
+   const incrementCounter = (userId) => {
+      setCounters((prevCounters) => ({
+        ...prevCounters,
+        [userId]: (prevCounters[userId] || 0) + 1,
+      }));
+   };
+  
+   // Function to handle decrementing the counter for a specific user
+   const decrementCounter = (userId) => {
+      setCounters((prevCounters) => ({
+        ...prevCounters,
+        [userId]: Math.max((prevCounters[userId] || 0) - 1, 0), // Ensure counter doesn't go below 0
+      }));
+   };
 
   return (
     <Box sx={{ padding: "20px", backgroundColor: colors.background }}>
@@ -188,21 +179,21 @@ const TabsOpen = () => {
           {flights.length > 0 && (
             <TabContext value={activeTab}>
               <TabList
-                onChange={(event, newValue) => handleFlightTabChange(newValue)}
+                onChange={(event, newValue) => handleTabChange(event, newValue)}
                 aria-label="flights"
                 className="border-b border-gray-200"
-                value={handleTabChange}
+                value={activeTab}
               >
                 {flights.map((flight, fIndex) => (
                   <Tab
                     key={flight.id} // Use a unique identifier as key
                     label={flight.date}
                     className="border-b border-gray-200"
-                    value={fIndex}
+                    value={fIndex.toString()} // Convert to string
                   />
                 ))}
               </TabList>
-              <TabPanel value={"0"}>
+              <TabPanel value={activeTab}>
                 <Paper
                   elevation={3}
                   sx={{ marginTop: 3, padding: "20px", borderRadius: 2 }}
@@ -218,17 +209,21 @@ const TabsOpen = () => {
                       <TableHead>
                         <TableRow>
                           <TableCell>Name</TableCell>
-                          <TableCell align="right">Integral Selector</TableCell>
+                          <TableCell>Nombre de siege</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {/* Render users for the current flight date */}
-                        {usersByFlightDate[flights.date]?.map((user) => (
+                        {users?.map((user) => (
                           <TableRow key={user.id}>
                             <TableCell component="th" scope="row">
-                              {user.firstName} {user.lastName}
+                              {user.name} 
                             </TableCell>
-                            <TableCell align="right"> </TableCell>
+                            <TableCell component="th" scope="row">           
+                              <Button sx={{color:"red"}} onClick={() => decrementCounter(user.id)}>-</Button>        
+                              {counters[user.id] || 0}
+                              <Button sx={{color:"green"}} onClick={() => incrementCounter(user.id)}>+</Button>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
