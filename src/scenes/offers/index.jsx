@@ -1,13 +1,13 @@
+import React, { useState } from "react";
 import { Box, Button, TextField } from "@mui/material";
 import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../../components/Header";
 import AddIcon from "@mui/icons-material/Add";
-import { getFirestore, collection, setDoc,doc } from "firebase/firestore";
+import { getFirestore, collection, setDoc, doc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes, getStorage } from "firebase/storage";
 import app from "../../base.js";
-import React, { useState } from "react";
 
 const storage = getStorage(app);
 const firestore = getFirestore(app);
@@ -69,7 +69,9 @@ const AddOffer = () => {
   const isNonMobile = useMediaQuery("(min-width:600px)");
 
   const offerSchema = yup.object().shape({
-    price: yup.string().required("Price is required"),
+    singlePrice: yup.string().required("Single Price is required"),
+    doublePrice: yup.string().required("Double Price is required"),
+    roomPrice: yup.string().required("Room Price is required"),
     date: yup.date().required("Date is required"),
     time: yup.string().required("Time is required"),
     title: yup.string().required("Title is required"),
@@ -78,7 +80,9 @@ const AddOffer = () => {
   const initialValues = {
     startDate: null,
     endDate: null,
-    price: "",
+    singlePrice: "",
+    doublePrice: "",
+    roomPrice: "",
     date: null,
     time: "",
     title: "",
@@ -87,28 +91,40 @@ const AddOffer = () => {
 
   const handleFormSubmit = async (values) => {
     console.log("Form submitted:", values);
-    const { price, date, time, title, poster } = values;
-
+    const { singlePrice, doublePrice, roomPrice, date, time, title, poster } = values;
+  
     try {
       const storageRef = ref(storage, `offers/${title}.jpg`);
-      const posterSnapshot = await uploadBytes(storageRef, poster);
-
+      await uploadBytes(storageRef, poster);
+  
       const sessionData = {
-        price,
         date,
         time,
         title,
       };
-
+  
       const collectionRef = collection(firestore, 'sessions'); // reference to the "sessions" collection
       const documentRef = doc(collectionRef, title);
       await setDoc(documentRef, sessionData);
-
+  
+      // Create a new nested document 'rooms' within the document
+      const roomsData = {
+        single: singlePrice.toString(),
+        double: doublePrice.toString(),
+        "room of 3": roomPrice.toString(),
+      };
+  
+      const roomsCollectionRef = collection(documentRef, 'rooms');
+      await setDoc(doc(roomsCollectionRef, 'roomTypes'), roomsData);
+  
       console.log("Data added to Firestore successfully!");
     } catch (error) {
       console.error("Error adding data to Firestore:", error);
     }
   };
+  
+  
+  
 
   return (
     <Box m="20px">
@@ -142,16 +158,41 @@ const AddOffer = () => {
                 fullWidth
                 variant="filled"
                 type="text"
-                label="Prix"
+                label="prix de chambre single"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.price}
-                name="price"
-                error={!!touched.price && !!errors.price}
-                helperText={touched.price && errors.price}
+                value={values.singlePrice}
+                name="singlePrice"
+                error={!!touched.singlePrice && !!errors.singlePrice}
+                helperText={touched.singlePrice && errors.singlePrice}
                 sx={{ gridColumn: "span 4" }}
               />
-              
+              <TextField
+                fullWidth
+                variant="filled"
+                type="text"
+                label="prix de chmbre double"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.doublePrice}
+                name="doublePrice"
+                error={!!touched.doublePrice && !!errors.doublePrice}
+                helperText={touched.doublePrice && errors.doublePrice}
+                sx={{ gridColumn: "span 4" }}
+              />
+              <TextField
+                fullWidth
+                variant="filled"
+                type="text"
+                label="prix chambre a 3"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.roomPrice}
+                name="roomPrice"
+                error={!!touched.roomPrice && !!errors.roomPrice}
+                helperText={touched.roomPrice && errors.roomPrice}
+                sx={{ gridColumn: "span 4" }}
+              />
               <TextField
                 fullWidth
                 variant="filled"
@@ -178,7 +219,6 @@ const AddOffer = () => {
                 helperText={touched.date && errors.date}
                 sx={{ gridColumn: "span 4" }}
               />
-              
               <TextField
                 fullWidth
                 variant="filled"
