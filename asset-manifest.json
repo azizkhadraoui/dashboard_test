@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/dashboard_test/static/css/main.ac5fa325.css",
-    "main.js": "/dashboard_test/static/js/main.0e89a286.js",
+    "main.js": "/dashboard_test/static/js/main.8b5c7715.js",
     "static/media/tunisiaGeoJSON.geojson": "/dashboard_test/static/media/tunisiaGeoJSON.d334971184d77179a16a.geojson",
     "index.html": "/dashboard_test/index.html",
     "main.ac5fa325.css.map": "/dashboard_test/static/css/main.ac5fa325.css.map",
-    "main.0e89a286.js.map": "/dashboard_test/static/js/main.0e89a286.js.map"
+    "main.8b5c7715.js.map": "/dashboard_test/static/js/main.8b5c7715.js.map"
   },
   "entrypoints": [
     "static/css/main.ac5fa325.css",
-    "static/js/main.0e89a286.js"
+    "static/js/main.8b5c7715.js"
   ]
 }
