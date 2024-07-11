@@ -39,13 +39,15 @@ const Team = () => {
   const fetchData = async () => {
     try {
       const db = getFirestore(app);
-      const q = query(collection(db, "users"));
-      const querySnapshot = await getDocs(q);
+      
+      // Fetching users collection
+      const userQuery = query(collection(db, "users"));
+      const userQuerySnapshot = await getDocs(userQuery);
 
-      const fetchedData = [];
-      querySnapshot.forEach((doc) => {
-        const { name, age, phone, accessLevel, email, chiffre_affaire, num_client } = doc.data();
-        fetchedData.push({
+      const fetchedUsers = [];
+      userQuerySnapshot.forEach((doc) => {
+        const { name, age, phone, accessLevel, email, chiffre_affaire, num_client, parin } = doc.data();
+        fetchedUsers.push({
           id: doc.id,
           name,
           age,
@@ -54,10 +56,33 @@ const Team = () => {
           email,
           chiffre_affaire,
           num_client,
+          parin: "null",
         });
       });
 
-      setData(fetchedData);
+      // Fetching sous_rabateur collection
+      const rabateurQuery = query(collection(db, "sous_rabateurs"));
+      const rabateurQuerySnapshot = await getDocs(rabateurQuery);
+
+      const fetchedRabateurs = [];
+      rabateurQuerySnapshot.forEach((doc) => {
+        const { name, age, phone, accessLevel, email, chiffre_affaire, num_client, parin } = doc.data();
+        fetchedRabateurs.push({
+          id: doc.id,
+          name,
+          age,
+          phone,
+          accessLevel,
+          email,
+          chiffre_affaire,
+          num_client,
+          parin,
+        });
+      });
+
+      // Combine both collections data
+      const combinedData = [...fetchedUsers, ...fetchedRabateurs];
+      setData(combinedData);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -81,7 +106,6 @@ const Team = () => {
   };
 
   const columns = [
-    { field: "id", headerName: "ID" },
     {
       field: "name",
       headerName: "Name",
@@ -108,12 +132,17 @@ const Team = () => {
       flex: 1,
     },
     {
+      field: "parin",
+      headerName: "Parin",
+      flex: 1,
+    },
+    {
       field: "accessLevel",
       headerName: "Niveau d'Accès",
       flex: 1,
       renderCell: ({ row }) => (
         <Box
-          width="60%"
+          width="80%"
           m="0 auto"
           p="5px"
           display="flex"
@@ -131,9 +160,9 @@ const Team = () => {
             setSelectedUserId(row.id);
           }}
         >
-          {row.accessLevel === "agence" && <AdminPanelSettingsOutlinedIcon />}
+          {row.accessLevel === "admin" && <AdminPanelSettingsOutlinedIcon />}
           {row.accessLevel === "rabateur" && <SecurityOutlinedIcon />}
-          {row.accessLevel === "voyageur" && <LockOpenOutlinedIcon />}
+          {row.accessLevel === "sous_rabateur" && <LockOpenOutlinedIcon />}
           <Typography color={colors.grey[100]} sx={{ ml: "5px" }}>
             {row.accessLevel}
           </Typography>
@@ -190,7 +219,7 @@ const Team = () => {
             <MenuItem value="manager">Manager</MenuItem>
             <MenuItem value="agence">Agence</MenuItem>
             <MenuItem value="rabateur">Rabateur</MenuItem>
-            <MenuItem value="voyageur">Voyageur</MenuItem>
+            <MenuItem value="sous_rabatteur">Voyageur</MenuItem>
           </Select>
         </DialogContent>
         <DialogActions>

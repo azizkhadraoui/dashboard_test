@@ -22,6 +22,9 @@ import PastFlights from "./scenes/pastflights/index.jsx";
 import AddOffer from "./scenes/offers/index.jsx";
 import Login from "./scenes/login";
 import TabsOpen from "./scenes/tabs/index.jsx";
+import Validation from "./scenes/validation/index.jsx";
+
+
 
 
 function App() {
@@ -54,6 +57,7 @@ function App() {
                 <Route path="faq" element={<PrivateRoute><FAQ /></PrivateRoute>} />
                 <Route path="calendar" element={<PrivateRoute><Calendar /></PrivateRoute>} />
                 <Route path="geography" element={<PrivateRoute><Geography /></PrivateRoute>} />
+                <Route path="validation" element={<PrivateRoute><Validation /></PrivateRoute>} />
                 <Route
                   path="profile/:id"
                   element={<PrivateRoute><Profile /></PrivateRoute>}

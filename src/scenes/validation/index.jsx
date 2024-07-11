@@ -97,7 +97,20 @@ const Invoices = () => {
         )
       ),
     },
-
+    {
+      field: "validation",
+      headerName: "validation",
+      flex: 1,
+      renderCell: (params) => (
+        <Button
+          variant="contained"
+          color={params.row.validation ? "primary" : "secondary"}
+          onClick={() => toggleValidation(params.row)}
+        >
+          {params.row.validation ? "Valide" : "Non Valide"}
+        </Button>
+      ),
+    },
   ];
 
   const fetchData = async () => {
@@ -110,7 +123,7 @@ const Invoices = () => {
       const clientId = clientDoc.id;
       const clientData = clientDoc.data();
       const paymentsCollection = collection(clientDoc.ref, "payments");
-      const paymentsQuery = query(paymentsCollection, where("validation", "==", true));
+      const paymentsQuery = query(paymentsCollection, where("validation", "==", false));
 
       const paymentsSnapshot = await getDocs(paymentsQuery);
 
@@ -145,11 +158,26 @@ const Invoices = () => {
     fetchData();
   }, []);
 
+  const toggleValidation = async (row) => {
+    const newValidationStatus = !row.validation;
+    const paymentDocRef = doc(db, "clients", row.clientId, "payments", row.id);
+    
+    await updateDoc(paymentDocRef, {
+      validation: newValidationStatus,
+    });
 
+    setInvoicesData((prevData) =>
+      prevData.map((invoice) =>
+        invoice.id === row.id && invoice.clientId === row.clientId
+          ? { ...invoice, validation: newValidationStatus }
+          : invoice
+      )
+    );
+  };
 
   return (
     <Box m="20px">
-      <Header title="PAYMENTS" subtitle="List des payments valide" />
+      <Header title="VALIDATION" subtitle="Liste de payment a valide" />
       <Box
         m="40px 0 0 0"
         height="75vh"

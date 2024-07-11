@@ -55,6 +55,7 @@ const Form = () => {
 
       // Access the user ID
       const userId = userCredential.user.uid;
+      console.log(auth.email);
 
       // Add user data to Firestore
       const userDocRef = await addDoc(collection(db, "users"), {
