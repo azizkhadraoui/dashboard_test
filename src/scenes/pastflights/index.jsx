@@ -66,7 +66,6 @@ const PastSessions = () => {
     { field: "title", headerName: "nom", flex: 1 },
     { field: "date", headerName: "de", flex: 1 },
     { field: "time", headerName: "jusqua", flex: 1 },
-    { field: "price", headerName: "prix", flex: 1 },
     {
       field: "actions",
       headerName: "Actions",

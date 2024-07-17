@@ -13,6 +13,7 @@ const Profile = () => {
   const [contacts, setContacts] = useState([]);
   const [profilePic, setProfilePic] = useState(null);
   const [visaPdf, setVisaPdf] = useState(null);
+  const [contractPdf, setContractPdf] = useState(null);
   const [pdfLoadingError, setPdfLoadingError] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -36,30 +37,29 @@ const Profile = () => {
           setProfilePic(downloadURL);
 
           const visaPdfRef = ref(storage, `visas/${contactData.passportNumber}.pdf`);
+          const contractPdfRef = ref(storage, `contrats/${contactData.passportNumber}.pdf`);
           try {
-            const visaPdfURL = await Promise.race([
-              getDownloadURL(visaPdfRef),
-              new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 10000))
-            ]);
+            const visaPdfURL = await getDownloadURL(visaPdfRef);
             setVisaPdf(visaPdfURL);
           } catch (error) {
-            if (error.message === "Timeout") {
-              console.error("The request to fetch the PDF timed out");
-            } else if (error.code === 'storage/object-not-found') {
-              console.error("The PDF file does not exist in Firebase Storage");
-            } else if (error.code === 'storage/unauthorized') {
-              console.error("You don't have permission to access this PDF");
-            }
             setVisaPdf(null);
-            setPdfLoadingError("Failed to load visa PDF: " + error.message);
-          } finally {
-            setPdfLoading(false);
+            console.error("Failed to load visa PDF:", error);
+          }
+
+          try {
+            const contractPdfURL = await getDownloadURL(contractPdfRef);
+            setContractPdf(contractPdfURL);
+          } catch (error) {
+            setContractPdf(null);
+            console.error("Failed to load contract PDF:", error);
           }
         } else {
           console.log("No such document!");
         }
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setPdfLoading(false);
       }
     };
 
@@ -88,7 +88,6 @@ const Profile = () => {
   }, [id]);
 
   const columns = [
-    { field: "id", headerName: "ID", flex: 1 },
     {
       field: "flight_date",
       headerName: "Date",
@@ -189,21 +188,39 @@ const Profile = () => {
       >
         <DataGrid rows={contacts} columns={columns} components={{ Toolbar: GridToolbar }} />
       </Box>
-      <Box m="20px" width="100%">
-        <Typography variant="h5" mb="10px">Visa PDF</Typography>
-        {pdfLoading ? (
-          <Typography>Loading PDF...</Typography>
-        ) : visaPdf ? (
-          <iframe
-            src={visaPdf}
-            title="Visa PDF"
-            width="100%"
-            height="600px"
-            style={{ border: 'none' }}
-          />
-        ) : (
-          <Typography variant="body1">{pdfLoadingError || "No PDF available"}</Typography>
-        )}
+      <Box m="20px" width="100%" display="flex" justifyContent="space-between">
+        <Box width="48%">
+          <Typography variant="h5" mb="10px">Visa PDF</Typography>
+          {pdfLoading ? (
+            <Typography>Loading PDF...</Typography>
+          ) : visaPdf ? (
+            <iframe
+              src={visaPdf}
+              title="Visa PDF"
+              width="100%"
+              height="600px"
+              style={{ border: 'none' }}
+            />
+          ) : (
+            <Typography variant="body1">{pdfLoadingError || "No Visa PDF available"}</Typography>
+          )}
+        </Box>
+        <Box width="48%">
+          <Typography variant="h5" mb="10px">Contract PDF</Typography>
+          {pdfLoading ? (
+            <Typography>Loading PDF...</Typography>
+          ) : contractPdf ? (
+            <iframe
+              src={contractPdf}
+              title="Contract PDF"
+              width="100%"
+              height="600px"
+              style={{ border: 'none' }}
+            />
+          ) : (
+            <Typography variant="body1">{pdfLoadingError || "No Contract PDF available"}</Typography>
+          )}
+        </Box>
       </Box>
     </Box>
   );

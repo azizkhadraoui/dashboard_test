@@ -149,10 +149,23 @@ const Contacts = () => {
           const querySnapshot = await getDocs(clientsCollection);
           querySnapshot.forEach(async (doc) => {
             if (doc.data().passportNumber === passportNumber.replace(/\s+/g, '')) {
-              await updateDoc(doc.ref, { visaStatus: 'visa dispo', fileURL });
-              console.log("Firestore document updated successfully!");
+              // Get the current tags array
+              const currentTags = doc.data().tags || [];
+          
+              // Remove the first element and add the new value
+              if (currentTags.length > 0) {
+                const updatedTags = [...currentTags];
+                updatedTags[0] = 'new tag value';
+          
+                // Update the document with the new tags array
+                await updateDoc(doc.ref, { tags: updatedTags, fileURL });
+                console.log("Firestore document updated successfully!");
+              } else {
+                console.log("No tags array or it is empty");
+              }
             }
           });
+          
 
           // Add document to 'visas' collection
           const visasCollection = collection(db, 'visas');
@@ -205,13 +218,18 @@ const Contacts = () => {
     },
     {
       field: "from",
-      headerName: "rabatteur",
+      headerName: "chef de groupe",
       flex: 1,
       valueGetter: (params) => params.row.from,
     },
     {
       field: "passportNumber",
       headerName: "Passport",
+      flex: 1,
+    },
+    {
+      field: "phone",
+      headerName: "numero telephone",
       flex: 1,
     },
     {

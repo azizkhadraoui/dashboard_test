@@ -1,4 +1,4 @@
-import { Box, Button, TextField } from "@mui/material";
+import { Box, Button, TextField, MenuItem, Select, InputLabel, FormControl } from "@mui/material";
 import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -6,7 +6,6 @@ import Header from "../../components/Header";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
 import app from "../../base.js";
-
 
 const Form = () => {
   const isNonMobile = useMediaQuery("(min-width:600px)");
@@ -18,6 +17,7 @@ const Form = () => {
     firstName: yup.string().required("required"),
     lastName: yup.string().required("required"),
     email: yup.string().email("invalid email").required("required"),
+    password: yup.string().required("required"),
     contact: yup
       .string()
       .matches(phoneRegExp, "Phone number is not valid")
@@ -27,13 +27,15 @@ const Form = () => {
   });
 
   const initialValues = {
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
-    phone: "",
+    password: "",
+    contact: "",
     age: "",
-    accessLevel: "",
-    num_client:"",
-    chiffre_affaire:"",
+    access: "",
+    num_client: "",
+    chiffre_affaire: "",
   };
 
   const handleFormSubmit = async (values) => {
@@ -42,31 +44,25 @@ const Form = () => {
       const auth = getAuth(app);
       const db = getFirestore(app);
 
-      // Generate a random password (for example purposes)
-      const generatedPassword = Math.random().toString().substring(8);
-      console.log(generatedPassword);
-
-      // Create user with email and generated password
+      // Create user with email and password from the form
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         values.email,
-        generatedPassword
+        values.password
       );
 
       // Access the user ID
       const userId = userCredential.user.uid;
-      console.log(auth.email);
 
       // Add user data to Firestore
       const userDocRef = await addDoc(collection(db, "users"), {
-        name: values.firstName +" "+ values.lastName,
+        name: values.firstName + " " + values.lastName,
         email: values.email,
         phone: values.contact,
         age: values.age,
         accessLevel: values.access,
-        num_client:"0",
-        chiffre_affaire:"0",
-
+        num_client: "0",
+        chiffre_affaire: "0",
       });
 
       console.log("User created with ID: ", userId);
@@ -144,6 +140,19 @@ const Form = () => {
               <TextField
                 fullWidth
                 variant="filled"
+                type="password"
+                label="Password"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.password}
+                name="password"
+                error={!!touched.password && !!errors.password}
+                helperText={touched.password && errors.password}
+                sx={{ gridColumn: "span 4" }}
+              />
+              <TextField
+                fullWidth
+                variant="filled"
                 type="text"
                 label="Contact Number"
                 onBlur={handleBlur}
@@ -167,23 +176,27 @@ const Form = () => {
                 helperText={touched.age && errors.age}
                 sx={{ gridColumn: "span 4" }}
               />
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
-                label="Role"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.access}
-                name="access"
-                error={!!touched.access && !!errors.access}
-                helperText={touched.acess && errors.access}
-                sx={{ gridColumn: "span 4" }}
-              />
+              <FormControl fullWidth variant="filled" sx={{ gridColumn: "span 4" }}>
+                <InputLabel>Role</InputLabel>
+                <Select
+                  name="access"
+                  value={values.access}
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  error={!!touched.access && !!errors.access}
+                >
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
+                  <MenuItem value="admin">Admin</MenuItem>
+                  <MenuItem value="rabatteur">Revendeur</MenuItem>
+                  <MenuItem value="sous_rabatteur">Sous_revendeur</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
             <Box display="flex" justifyContent="end" mt="20px">
               <Button type="submit" color="secondary" variant="contained">
-                Create New User
+                ajouter un utilisateur
               </Button>
             </Box>
           </form>

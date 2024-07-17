@@ -1,10 +1,12 @@
 import React, { useContext, useState } from 'react'
 import { Link, Outlet, useNavigate } from 'react-router-dom'
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore'
 import app from '../../base'
 import { AuthContext } from '../../Auth'
 
 const auth = getAuth(app)
+const db = getFirestore(app)
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -18,8 +20,26 @@ function Login() {
     e.preventDefault()
 
     try {
-      await signInWithEmailAndPassword(auth, email, password)
-      navigate('/dashboard')
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
+
+      // Query Firestore to get the user document with the email
+      const q = query(collection(db, 'users'), where('email', '==', email))
+      const querySnapshot = await getDocs(q)
+      
+      if (!querySnapshot.empty) {
+        const userData = querySnapshot.docs[0].data()
+
+        if (userData.accessLevel === 'admin') {
+          navigate('/dashboard')
+        } else {
+          setError('Access denied: Admins only')
+          await auth.signOut()
+        }
+      } else {
+        setError('User data not found')
+        await auth.signOut()
+      }
     } catch (error) {
       setError(error.message)
     }

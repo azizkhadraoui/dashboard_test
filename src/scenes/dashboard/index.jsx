@@ -19,13 +19,9 @@ import {
   getFirestore,
   collection,
   getDocs,
-  deleteDoc,
-  doc,
-  setDoc,
   query,
   where,
 } from "firebase/firestore";
-
 
 const Dashboard = () => {
   const [Revenue, setRevenue] = useState(0);
@@ -33,12 +29,14 @@ const Dashboard = () => {
     count: 0,
     progress: 0,
     increase: 0,
-  })
+  });
   const [newSales, setNewSales] = useState({
     count: 0,
     progress: 0,
     increase: 0,
-  })
+  });
+  const [invoicesData, setInvoicesData] = useState([]);
+
   const overlayStyles = {
     position: "absolute",
     top: 0,
@@ -48,44 +46,45 @@ const Dashboard = () => {
     backgroundColor: "rgba(128, 128, 128, 0.5)", // Semi-transparent grey color
     backdropFilter: "blur(8px)", // Adjust the blur strength as needed
   };
+
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
- 
+  const parseDate = (date) => {
+    const day = String(date.toDate().getDate()).padStart(2, '0');
+    const month = String(date.toDate().getMonth() + 1).padStart(2, '0'); // Note: Month is zero-based
+    const year = date.toDate().getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
-      const parseDate = (dateString) => {
-        const [day, month, year] = dateString.split('/').map(Number);
-        return new Date(year, month - 1, day); // Note: Month is zero-based in JavaScript Date
-      };
       try {
         const db = getFirestore(app);
         const clientsCollection = collection(db, "clients");
         const clientsSnapshot = await getDocs(clientsCollection);
-  
+
         const newClientsData = [];
         const newSalesData = [];
         const paymentsData = [];
-  
+
         const currentDate = new Date();
         const oneDayAgo = new Date();
         oneDayAgo.setDate(oneDayAgo.getDate() - 1);
         let totalRevenue = 0;
-  
+
         for (const clientDoc of clientsSnapshot.docs) {
           const clientData = clientDoc.data();
-          const creationDate = new Date(clientData.creation_date);
-  
+          const creationDate = clientData.creation_date.toDate();
+
           if (creationDate >= oneDayAgo) {
             newClientsData.push(clientData);
           }
-  
+
           const clientId = clientDoc.id;
           const paymentsCollection = collection(clientDoc.ref, "payments");
-          const paymentsQuery = query(paymentsCollection);
+          const paymentsQuery = query(paymentsCollection, where("validation", "==", true));
           const paymentsSnapshot = await getDocs(paymentsQuery);
-  
-          
 
           paymentsSnapshot.forEach((paymentDoc) => {
             const paymentData = {
@@ -97,34 +96,33 @@ const Dashboard = () => {
               ...paymentDoc.data(),
             };
             paymentsData.push(paymentData);
-        
+
             const valueString = paymentData.value || "0";
             const valueNumber = parseInt(valueString, 10);
             totalRevenue += valueNumber;
-        
-            const paymentDate = parseDate(paymentData.date);
+
+            const paymentDate = new Date(paymentData.date.seconds * 1000);
             if (paymentDate >= oneDayAgo) {
               newSalesData.push(paymentData.value);
             }
           });
-        
         }
-        
+
         setRevenue(totalRevenue);
-        
-  
+
         const newSalesCount = newSalesData.length;
-        const previousSalesCount = paymentsData.length - newSalesCount; 
-  
+        const previousSalesCount = paymentsData.length - newSalesCount;
+
         const newClientsCount = newClientsData.length;
         const previousClientsCount = clientsSnapshot.size - newClientsCount;
-  
+        console.log("n9oss nyak",newClientsCount,previousClientsCount);
+
         const progress = calculateProgress(newClientsCount, previousClientsCount);
         const increase = calculateIncrease(newClientsCount, previousClientsCount);
 
         const progress2 = calculateProgress(newSalesCount, previousSalesCount);
         const increase2 = calculateIncrease(newSalesCount, previousSalesCount);
-  
+
         setNewClients({
           count: newClientsCount,
           progress,
@@ -136,42 +134,34 @@ const Dashboard = () => {
           progress2,
           increase2,
         });
-  
+
         setInvoicesData(paymentsData);
-  
+
         return paymentsData;
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
-  
+
     fetchData();
   }, []);
-  
+
   useEffect(() => {
     console.log("Updated Revenue:", Revenue);
     // Any other logic you want to execute after the state update
   }, [Revenue]);
-  
-  
 
-
-  const calculateProgress = (newClientsCount, previousClientsCount) => {
-    return previousClientsCount > 0
-      ? newClientsCount / (newClientsCount + previousClientsCount)
+  const calculateProgress = (newCount, previousCount) => {
+    return previousCount > 0
+      ? newCount / (newCount + previousCount)
       : 0;
   };
 
-  const calculateIncrease = (newClientsCount, previousClientsCount) => {
-    return previousClientsCount > 0
-      ? Math.round((newClientsCount / (newClientsCount + previousClientsCount)) * 100)
+  const calculateIncrease = (newCount, previousCount) => {
+    return previousCount > 0
+      ? Math.round((newCount / (newCount + previousCount)) * 100)
       : 0;
   };
-  console.log(newSales);
-
-
-
-  const [invoicesData, setInvoicesData] = useState([]);
 
   return (
     <Box m="20px">
@@ -187,7 +177,6 @@ const Dashboard = () => {
               fontSize: "14px",
               fontWeight: "bold",
               padding: "10px 20px",
-              
             }}
           >
             <DownloadOutlinedIcon sx={{ mr: "10px" }} />
@@ -329,7 +318,6 @@ const Dashboard = () => {
           <Box height="250px" m="-20px 0 0 0">
             <LineChart isDashboard={true} />
             <div style={overlayStyles}></div>
-            
           </Box>
         </Box>
         <Box
@@ -371,13 +359,13 @@ const Dashboard = () => {
                   {transaction.user}
                 </Typography>
               </Box>
-              <Box color={colors.grey[100]}>{transaction.date}</Box>
+              <Box color={colors.grey[100]}>{parseDate(transaction.date)}</Box>
               <Box
                 backgroundColor={colors.greenAccent[500]}
                 p="5px 10px"
                 borderRadius="4px"
               >
-                ${transaction.value}
+                {transaction.value}DNT
               </Box>
             </Box>
           ))}

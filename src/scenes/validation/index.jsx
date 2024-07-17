@@ -29,18 +29,23 @@ const Invoices = () => {
     const usersCollection = collection(db, "users");
     const q = query(usersCollection, where("email", "==", email));
     const querySnapshot = await getDocs(q);
-  
+
     if (querySnapshot.empty) {
       throw new Error(`No user found with email: ${email}`);
     }
-  
+
     let userName = "";
-  
+
     querySnapshot.forEach((doc) => {
       userName = doc.data().name;
     });
-  
+
     return userName;
+  };
+
+  const formatDate = (timestamp) => {
+    const date = timestamp.toDate(); // Convert Firestore timestamp to JavaScript Date object
+    return date.toLocaleDateString("en-GB"); // Format date as dd-mm-yyyy
   };
 
   const columns = [
@@ -74,6 +79,7 @@ const Invoices = () => {
       field: "date",
       headerName: "date",
       flex: 1,
+      valueGetter: (params) => formatDate(params.row.date),
     },
     {
       field: "methode_payment",
@@ -116,21 +122,21 @@ const Invoices = () => {
   const fetchData = async () => {
     const clientsCollection = collection(db, "clients");
     const clientsSnapshot = await getDocs(clientsCollection);
-
-    let paymentsData = [];
-
+  
+    let paymentsMap = new Map(); // Using a Map to track payments by groupId and value
+  
     for (const clientDoc of clientsSnapshot.docs) {
       const clientId = clientDoc.id;
       const clientData = clientDoc.data();
       const paymentsCollection = collection(clientDoc.ref, "payments");
       const paymentsQuery = query(paymentsCollection, where("validation", "==", false));
-
+  
       const paymentsSnapshot = await getDocs(paymentsQuery);
-
+  
       for (const paymentDoc of paymentsSnapshot.docs) {
         const paymentData = paymentDoc.data();
         let fromName = "Unknown";
-
+  
         if (clientData.from) {
           try {
             fromName = await getUserByEmail(clientData.from);
@@ -138,34 +144,115 @@ const Invoices = () => {
             console.error(error);
           }
         }
-
-        paymentsData.push({
-          id: paymentDoc.id,
-          clientId,
-          name: clientData.firstName + " " + clientData.lastName,
-          from: fromName,
-          passport: clientData.passportNumber,
-          ...paymentData,
-        });
+  
+        const paymentKey = `${paymentData.group_id}_${paymentData.value}`;
+  
+        if (!paymentsMap.has(paymentKey)) {
+          paymentsMap.set(paymentKey, {
+            id: paymentDoc.id,
+            clientId,
+            name: clientData.firstName + " " + clientData.lastName,
+            from: fromName,
+            passport: clientData.passportNumber,
+            group_id: paymentData.group_id,
+            ...paymentData,
+          });
+        }
       }
     }
-    setInvoicesData(paymentsData);
+  
+    // Convert paymentsMap values to an array of unique payments
+    const uniquePayments = Array.from(paymentsMap.values());
+  
+    setInvoicesData(uniquePayments);
   };
-
+  
   const [invoicesData, setInvoicesData] = useState([]);
-
+  
   useEffect(() => {
     fetchData();
-  }, []);
-
+  }, []); 
+  
+  const updateFlightPayment = async (groupId, paymentValue) => {
+    const clientsCollection = collection(db, "clients");
+    const clientsQuery = query(clientsCollection);
+    const clientsSnapshot = await getDocs(clientsQuery);
+  
+    let flightUpdates = [];
+    let clientUpdates = []; // Added for updating tags
+  
+    for (const clientDoc of clientsSnapshot.docs) {
+      const clientDocRef = clientDoc.ref;
+      const flightsCollection = collection(clientDocRef, "flights");
+      const flightsQuery = query(flightsCollection, where("group_id", "==", groupId));
+      const flightsSnapshot = await getDocs(flightsQuery);
+      let updatedPayment=0;
+  
+      if (!flightsSnapshot.empty) {
+        flightsSnapshot.forEach(async (doc) => {
+          const flightDocRef = doc.ref;
+          const flightData = doc.data();
+  
+          updatedPayment = (parseInt(flightData.payment) || 0) + parseInt(paymentValue);
+  
+          flightUpdates.push(updateDoc(flightDocRef, { payment: updatedPayment }));
+        });
+  
+        // Update tags for clients with flights in this group
+        let prixTotale = 0;
+        let totalPayment = 0;
+  
+        flightsSnapshot.forEach((doc) => {
+          prixTotale += doc.data().prix_totale || 0;
+          totalPayment += updatedPayment || 0;
+        });
+  
+        if (totalPayment >= prixTotale) {
+          let updatedTags = clientDoc.data().tags.map(tag => tag === "non paye" ? "paye" : tag);
+          clientUpdates.push(updateDoc(clientDocRef, { tags: updatedTags }));
+        }
+      }
+    }
+  
+    await Promise.all(flightUpdates);
+    await Promise.all(clientUpdates);
+  };
+  
   const toggleValidation = async (row) => {
     const newValidationStatus = !row.validation;
-    const paymentDocRef = doc(db, "clients", row.clientId, "payments", row.id);
+    const paymentKey = `${row.group_id}_${row.value}`;
+  
+    // Fetch all payments with the same paymentKey
+    const clientsCollection = collection(db, "clients");
+    const clientsSnapshot = await getDocs(clientsCollection);
     
-    await updateDoc(paymentDocRef, {
-      validation: newValidationStatus,
-    });
-
+    let updatePromises = [];
+  
+    for (const clientDoc of clientsSnapshot.docs) {
+      const clientDocRef = clientDoc.ref;
+      const paymentsCollection = collection(clientDocRef, "payments");
+      const paymentsQuery = query(paymentsCollection, where("group_id", "==", row.group_id), where("value", "==", row.value));
+      const paymentsSnapshot = await getDocs(paymentsQuery);
+  
+      paymentsSnapshot.forEach((doc) => {
+        const paymentDocRef = doc.ref;
+        updatePromises.push(updateDoc(paymentDocRef, { validation: newValidationStatus }));
+      });
+    }
+  
+    // Execute all update promises
+    await Promise.all(updatePromises);
+  
+    // Update flight payments if new status is validated
+    if (newValidationStatus) {
+      try {
+        await updateFlightPayment(row.group_id, row.value);
+      } catch (error) {
+        console.error("Error updating flight payments: ", error);
+      }
+    }
+  
+    // Update local state to reflect the change
     setInvoicesData((prevData) =>
       prevData.map((invoice) =>
         invoice.id === row.id && invoice.clientId === row.clientId
@@ -174,7 +261,7 @@ const Invoices = () => {
       )
     );
   };
-
+  
   return (
     <Box m="20px">
       <Header title="VALIDATION" subtitle="Liste de payment a valide" />

@@ -19,7 +19,6 @@ import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import HistoryIcon from "@mui/icons-material/History";
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
-
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -99,7 +98,7 @@ const Sidebar = () => {
                   alt="profile-user"
                   width="100px"
                   height="100px"
-                  src={`../../assets/user.png`}
+                  src={require('./user.jpg')}
                   style={{ cursor: "pointer", borderRadius: "50%" }}
                 />
               </Box>
@@ -110,10 +109,10 @@ const Sidebar = () => {
                   fontWeight="bold"
                   sx={{ m: "10px 0 0 0" }}
                 >
-                  Ed Roh
+                  MedTour
                 </Typography>
                 <Typography variant="h5" color={colors.greenAccent[500]}>
-                  VP Fancy Admin
+                  dashboard admin
                 </Typography>
               </Box>
             </Box>
@@ -152,6 +151,13 @@ const Sidebar = () => {
             <Item
               title="Payments"
               to="/invoices"
+              icon={<ReceiptOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="groupement"
+              to="/group"
               icon={<ReceiptOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}

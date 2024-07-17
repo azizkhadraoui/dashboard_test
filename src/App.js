@@ -23,6 +23,7 @@ import AddOffer from "./scenes/offers/index.jsx";
 import Login from "./scenes/login";
 import TabsOpen from "./scenes/tabs/index.jsx";
 import Validation from "./scenes/validation/index.jsx";
+import Group from "./scenes/groupement/index.jsx";
 
 
 
@@ -58,6 +59,7 @@ function App() {
                 <Route path="calendar" element={<PrivateRoute><Calendar /></PrivateRoute>} />
                 <Route path="geography" element={<PrivateRoute><Geography /></PrivateRoute>} />
                 <Route path="validation" element={<PrivateRoute><Validation /></PrivateRoute>} />
+                <Route path="group" element={<PrivateRoute><Group /></PrivateRoute>} />
                 <Route
                   path="profile/:id"
                   element={<PrivateRoute><Profile /></PrivateRoute>}

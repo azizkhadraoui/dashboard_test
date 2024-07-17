@@ -4,7 +4,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import { useTheme } from "@mui/material";
-import { getFirestore, collection, getDocs, query, where, doc, updateDoc } from "firebase/firestore";
+import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
 import app from "../../base.js";
 
 const Invoices = () => {
@@ -43,6 +43,63 @@ const Invoices = () => {
     return userName;
   };
 
+  const formatDate = (timestamp) => {
+    const date = timestamp.toDate(); // Convert Firestore timestamp to JavaScript Date object
+    return date.toLocaleDateString("en-GB"); // Format date as dd-mm-yyyy
+  };
+
+  const fetchData = async () => {
+    const clientsCollection = collection(db, "clients");
+    const clientsSnapshot = await getDocs(clientsCollection);
+
+    let paymentsData = [];
+    let seenGroupIds = new Set();
+
+    for (const clientDoc of clientsSnapshot.docs) {
+      const clientId = clientDoc.id;
+      const clientData = clientDoc.data();
+      const paymentsCollection = collection(clientDoc.ref, "payments");
+      const paymentsQuery = query(paymentsCollection, where("validation", "==", true));
+
+      const paymentsSnapshot = await getDocs(paymentsQuery);
+
+      for (const paymentDoc of paymentsSnapshot.docs) {
+        const paymentData = paymentDoc.data();
+        const { group_id } = paymentData;
+
+        if (!seenGroupIds.has(group_id)) {
+          let fromName = "Unknown";
+
+          if (clientData.from) {
+            try {
+              fromName = await getUserByEmail(clientData.from);
+            } catch (error) {
+              console.error(error);
+            }
+          }
+
+          paymentsData.push({
+            id: paymentDoc.id,
+            clientId,
+            name: clientData.firstName + " " + clientData.lastName,
+            from: fromName,
+            passport: clientData.passportNumber,
+            ...paymentData,
+          });
+
+          seenGroupIds.add(group_id);
+        }
+      }
+    }
+    setInvoicesData(paymentsData);
+  };
+
+  const [invoicesData, setInvoicesData] = useState([]);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const columns = [
     {
       field: "name",
@@ -74,6 +131,7 @@ const Invoices = () => {
       field: "date",
       headerName: "date",
       flex: 1,
+      valueGetter: (params) => formatDate(params.row.date), // Format date using formatDate function
     },
     {
       field: "methode_payment",
@@ -97,55 +155,7 @@ const Invoices = () => {
         )
       ),
     },
-
   ];
-
-  const fetchData = async () => {
-    const clientsCollection = collection(db, "clients");
-    const clientsSnapshot = await getDocs(clientsCollection);
-
-    let paymentsData = [];
-
-    for (const clientDoc of clientsSnapshot.docs) {
-      const clientId = clientDoc.id;
-      const clientData = clientDoc.data();
-      const paymentsCollection = collection(clientDoc.ref, "payments");
-      const paymentsQuery = query(paymentsCollection, where("validation", "==", true));
-
-      const paymentsSnapshot = await getDocs(paymentsQuery);
-
-      for (const paymentDoc of paymentsSnapshot.docs) {
-        const paymentData = paymentDoc.data();
-        let fromName = "Unknown";
-
-        if (clientData.from) {
-          try {
-            fromName = await getUserByEmail(clientData.from);
-          } catch (error) {
-            console.error(error);
-          }
-        }
-
-        paymentsData.push({
-          id: paymentDoc.id,
-          clientId,
-          name: clientData.firstName + " " + clientData.lastName,
-          from: fromName,
-          passport: clientData.passportNumber,
-          ...paymentData,
-        });
-      }
-    }
-    setInvoicesData(paymentsData);
-  };
-
-  const [invoicesData, setInvoicesData] = useState([]);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-
 
   return (
     <Box m="20px">
