@@ -34,7 +34,7 @@ function App() {
   const currentPath = window.location.pathname;
 
   // Determine whether to show the top and sidebar based on the current path
-  const showTopbarAndSidebar = currentPath !== "/login";
+  const showTopbarAndSidebar = currentPath !== "/dashboard_test/login";
 
   return (
     <AuthProvider>
@@ -43,7 +43,7 @@ function App() {
           <CssBaseline />
           <div className="app">
             {showTopbarAndSidebar && <Sidebar />}
-            <main className={currentPath === "/login" ? "content centered-content" : "content"}>
+            <main className={currentPath === "/dashboard_test/login" ? "content centered-content" : "content"}>
               {showTopbarAndSidebar && <Topbar />}
               <Routes>
                 <Route path="/dashboard_test/login" element={<Login />} />
@@ -73,7 +73,7 @@ function App() {
                   element={<PrivateRoute><AddOffer /></PrivateRoute>}
                 />
                 <Route path="*" element={<Navigate to="/dashboard_test/" replace />} />
-                <Route path="/dashboard_test//tab" element={<TabsOpen/>} />
+                <Route path="/dashboard_test/tab" element={<TabsOpen/>} />
               </Routes>
             </main>
           </div>

@@ -336,10 +336,10 @@ const PastSessions = () => {
                     Date: {flight.date} - Capacité: {flight.empty_seats}
                   </span>
                   {flight.return_date && (
-                    <span> - Return Date: {flight.return_date}</span>
+                    <span> - date de retour: {flight.return_date}</span>
                   )}
                   {flight.flight_company && (
-                    <span> - Flight Company: {flight.flight_company}</span>
+                    <span> - compagnie aerienne: {flight.flight_company}</span>
                   )}
                 </div>
                 <div>

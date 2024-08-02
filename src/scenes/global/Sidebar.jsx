@@ -125,7 +125,7 @@ const Sidebar = () => {
           <Box paddingLeft={isCollapsed ? undefined : "10%"}>
             <Item
               title="Dashboard"
-              to="/"
+              to="/dashboard_test/"
               icon={<HomeOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
@@ -140,42 +140,42 @@ const Sidebar = () => {
             </Typography>
             <Item
               title="Manager les Utilisateur"
-              to="/team"
+              to="/dashboard_test/team"
               icon={<PeopleOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="Clients"
-              to="/contacts"
+              to="/dashboard_test/contacts"
               icon={<ContactsOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="Payments"
-              to="/invoices"
+              to="/dashboard_test/invoices"
               icon={<AttachMoneyIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="groupement"
-              to="/group"
+              to="/dashboard_test/group"
               icon={<GroupsIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="les packs"
-              to="/pastflights"
+              to="/dashboard_test/pastflights"
               icon={<HistoryIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="tabs"
-              to="/tab"
+              to="/dashboard_test/tab"
               icon={<EventSeatIcon />}
               selected={selected}
               setSelected={setSelected}
@@ -190,35 +190,35 @@ const Sidebar = () => {
             </Typography>
             <Item
               title="Accepter un utilisateur"
-              to="/form"
+              to="/dashboard_test/form"
               icon={<PersonOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="Ajouter un offre"
-              to="/addoffer"
+              to="/dashboard_test/addoffer"
               icon={<AddCircleOutlineIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="Validation"
-              to="/validation"
+              to="/dashboard_test/validation"
               icon={<DoneOutlineIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="Calendar"
-              to="/calendar"
+              to="/dashboard_test/calendar"
               icon={<CalendarTodayOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="Commentaires"
-              to="/faq"
+              to="/dashboard_test/faq"
               icon={<HelpOutlineOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
@@ -233,28 +233,28 @@ const Sidebar = () => {
             </Typography>
             <Item
               title="Bar Chart"
-              to="/bar"
+              to="/dashboard_test/bar"
               icon={<BarChartOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="Pie Chart"
-              to="/pie"
+              to="/dashboard_test/pie"
               icon={<PieChartOutlineOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="Line Chart"
-              to="/line"
+              to="/dashboard_test/line"
               icon={<TimelineOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="Geography Chart"
-              to="/geography"
+              to="/dashboard_test/geography"
               icon={<MapOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
