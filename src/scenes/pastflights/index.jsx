@@ -64,8 +64,8 @@ const PastSessions = () => {
 
   const columns = [
     { field: "title", headerName: "nom", flex: 1 },
-    { field: "date", headerName: "de", flex: 1 },
-    { field: "time", headerName: "jusqua", flex: 1 },
+    { field: "time", headerName: "de", flex: 1 },
+    { field: "date", headerName: "jusqua", flex: 1 },
     {
       field: "actions",
       headerName: "Actions",
@@ -379,12 +379,13 @@ const PastSessions = () => {
             <TextField
               label="Date de vol"
               type="date"
+              InputLabelProps={{ shrink: true }}
               fullWidth
               value={formData.date}
               onChange={(e) =>
                 setFormData({ ...formData, date: e.target.value })
               }
-              sx={{ marginBottom: 2 }}
+              sx={{ gridColumn: "span 4" }}
             />
             <TextField
               label="Empty Seats"
@@ -400,10 +401,11 @@ const PastSessions = () => {
               type="date"
               fullWidth
               value={formData.returnDate}
+              InputLabelProps={{ shrink: true }}
               onChange={(e) =>
                 setFormData({ ...formData, returnDate: e.target.value })
               }
-              sx={{ marginBottom: 2 }}
+              sx={{ gridColumn: "span 4" }}
             />
             <TextField
               label="Flight Company"

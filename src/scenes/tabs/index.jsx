@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { ResponsivePie } from "@nivo/pie";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 import {
   Box,
   Typography,
@@ -160,9 +162,9 @@ const TabsOpen = () => {
   const colors = tokens(theme.palette.mode);
   useEffect(() => {
     const fetchTabData = async () => {
-      // Check if flights array is empty or undefined
-      if (!flights || flights.length === 0) {
-        return; // Do nothing if flights array is empty
+      // Check if flights array is empty or if activeTab is not valid
+      if (!flights || flights.length === 0 || !flights[activeTab]) {
+        return; // Do nothing if flights array is empty or activeTab is invalid
       }
   
       // Fetch data from Firebase based on the active tab
@@ -188,7 +190,7 @@ const TabsOpen = () => {
           seatQuerySnapshot.forEach(doc => {
             const userData = doc.data();
             Object.keys(userData).forEach(userid => {
-              const user = users.find(user => user.email === userid);
+              const user = users.find(user => user.numPasseport === userid);
               if (user) {
                 newData.push({ id: user.name, label: user.name, value: userData[userid] });
                 
@@ -209,11 +211,11 @@ const TabsOpen = () => {
       } catch (error) {
         console.error("Error fetching flight data:", error);
       }
-      
     };
   
     fetchTabData();
   }, [activeTab, flights, users]);
+  
   
   
   
@@ -269,9 +271,10 @@ const TabsOpen = () => {
     const fetchAllUsers = async () => {
       const db = getFirestore(app);
       const usersCollection = collection(db, "users");
+      const q = query(usersCollection, where("accessLevel", "==", "rabateur"));
 
       try {
-        const querySnapshot = await getDocs(usersCollection);
+        const querySnapshot = await getDocs(q);
         const usersData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -310,10 +313,25 @@ const TabsOpen = () => {
 
   const handleSessionTabChange = useCallback((event, newValue) => {
     setSessionValue(newValue);
+    setActiveTab(""); // Unselect all flight tabs
     setFlightValue(0);
     setData([]);
     setCounters([]);
+    setNewval(["null", "null", "null", "null", "null"]);
   }, []);
+  const handleSubmit = async () => {
+    // Ensure counters and data are up-to-date
+    const updatedData = data;
+    const updatedCounters = counters;
+    toast.success("les siege bien ete ajoutee");
+
+  
+    for (const user of users) {
+      const userValue = updatedData.find(item => item.id === user.name)?.value || 0;
+      await addSeatToFlight(newval[4], newval[3], newval[0], userValue, user.numPasseport);
+    }
+  };
+  
 
   const handleUserChange = useCallback((event) => {
     setSelectedUserId(event.target.value);
@@ -333,78 +351,37 @@ const TabsOpen = () => {
   };
 
   const incrementCounter = (userId) => {
-    if (newval[0] <= 0) {
-      // If empty seats are already zero or negative, don't allow incrementing counters
-      console.log("No empty seats available.");
-      return;
-    }
-  
     setCounters((prevCounters) => ({
       ...prevCounters,
       [userId]: (prevCounters[userId] || 0) + 1,
     }));
   
-    newval[0] = newval[0] - 1;
-
-    getUsernameFromUserId(userId).then((username) => {
-        setData((prevData) => {
-            const existingIndex = prevData.findIndex((item) => item.label === username);
-            if (existingIndex !== -1) {
-                // Update existing element
-                return prevData.map((item, index) => {
-                    if (index === existingIndex) {
-                        return {
-                            ...item,
-                            value: (counters[userId] || 0) + 1,
-                        };
-                    }
-                    return item;
-                });
-            } else {
-                // Add new element
-                return [
-                    ...prevData,
-                    {
-                        id: username,
-                        label: username,
-                        value: (counters[userId] || 0) + 1,
-                    },
-                ];
-            }
-        });
-
-        // Update siege vide element
-        setData((prevData) => {
-            const siegeVideIndex = prevData.findIndex((item) => item.label === 'siege vide');
-            if (siegeVideIndex !== -1) {
-                return prevData.map((item, index) => {
-                    if (index === siegeVideIndex) {
-                        return {
-                            ...item,
-                            value: newval[0],
-                        };
-                    }
-                    return item;
-                });
-            } else {
-                return [
-                    ...prevData,
-                    {
-                        id: 'siege vide',
-                        label: 'siege vide',
-                        value: newval[0],
-                    },
-                ];
-            }
-        });
-
-        console.log("Username:", username);
-        console.log("counter: ", (counters[userId] || 0) + 1);
-        console.log("data:", data);
-    }).catch((error) => {
-        console.error("Error getting username:", error);
+    setNewval((prevNewval) => {
+      const updatedVal = prevNewval[0] - 1;
+      if (updatedVal < 0) {
+        console.log("No empty seats available.");
+        return prevNewval;
+      }
+  
+      return [updatedVal, ...prevNewval.slice(1)];
     });
-};
+  
+    getUsernameFromUserId(userId).then((username) => {
+      setData((prevData) => {
+        const existingIndex = prevData.findIndex((item) => item.label === username);
+        if (existingIndex !== -1) {
+          return prevData.map((item, index) => {
+            if (index === existingIndex) {
+              return { ...item, value: item.value + 1 };
+            }
+            return item;
+          });
+        } else {
+          return [...prevData, { id: username, label: username, value: 1 }];
+        }
+      });
+    }).catch(console.error);
+  };
 
 
 
@@ -465,95 +442,36 @@ if (!querySnapshot.empty) {
 
 
 
-
-
-
-
-
-
-
-
-
-
 const decrementCounter = (userId) => {
   setCounters((prevCounters) => {
     const newCounter = (prevCounters[userId] || 0) - 1;
-    // Ensure counter doesn't go below 0
-    return {
-      ...prevCounters,
-      [userId]: Math.max(0, newCounter),
-    };
+    if (newCounter < 0) return prevCounters;
+    return { ...prevCounters, [userId]: newCounter };
   });
 
-  // Only decrement newval[0] if the counter was not already 0
-  if (counters[userId] > 0) {
-    newval[0] = newval[0] + 1;
-  }
+  setNewval((prevNewval) => [prevNewval[0] + 1, ...prevNewval.slice(1)]);
 
   getUsernameFromUserId(userId).then((username) => {
-      setData((prevData) => {
-          const existingIndex = prevData.findIndex((item) => item.label === username);
-          if (existingIndex !== -1) {
-              // Update existing element
-              return prevData.map((item, index) => {
-                  if (index === existingIndex) {
-                      return {
-                          ...item,
-                          value: (counters[userId] || 0) - 1,
-                      };
-                  }
-                  return item;
-              });
-          } else {
-              // Add new element
-              return [
-                  ...prevData,
-                  {
-                      id: username,
-                      label: username,
-                      value: (counters[userId] || 0) - 1,
-                  },
-              ];
+    setData((prevData) => {
+      const existingIndex = prevData.findIndex((item) => item.label === username);
+      if (existingIndex !== -1) {
+        return prevData.map((item, index) => {
+          if (index === existingIndex) {
+            return { ...item, value: Math.max(0, item.value - 1) };
           }
-      });
-
-      // Update siege vide element
-      setData((prevData) => {
-          const siegeVideIndex = prevData.findIndex((item) => item.label === 'siege vide');
-          if (siegeVideIndex !== -1) {
-              return prevData.map((item, index) => {
-                  if (index === siegeVideIndex) {
-                      return {
-                          ...item,
-                          value: newval[0],
-                      };
-                  }
-                  return item;
-              });
-          } else {
-              return [
-                  ...prevData,
-                  {
-                      id: 'siege vide',
-                      label: 'siege vide',
-                      value: newval[0],
-                  },
-              ];
-          }
-      });
-
-      console.log("Username:", username);
-      console.log("counter: ", (counters[userId] || 0) - 1);
-      console.log("data:", data);
-  }).catch((error) => {
-      console.error("Error getting username:", error);
-  });
+          return item;
+        });
+      }
+      return prevData;
+    });
+  }).catch(console.error);
 };
 
 
   return (
     <Box sx={{ padding: "20px", backgroundColor: colors.background }}>
       <Header title="CLIENTS" subtitle="Liste des client" />
+      <ToastContainer />
       <Paper
         elevation={3}
         sx={{
@@ -710,14 +628,7 @@ const decrementCounter = (userId) => {
             color: 'white',
           },
         }}
-        onClick={() => {
-          console.log(newval[4], newval[3]);
-          users.forEach(user => {
-            const userValue = data.find(item => item.id === user.name)?.value || 0;
-            addSeatToFlight(newval[4], newval[3], newval[0], userValue, user.email);
-
-          });
-        }}
+        onClick={handleSubmit}
         
       >
         Soumettre

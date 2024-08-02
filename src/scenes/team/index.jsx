@@ -46,17 +46,20 @@ const Team = () => {
 
       const fetchedUsers = [];
       userQuerySnapshot.forEach((doc) => {
-        const { name, age, phone, accessLevel, email, chiffre_affaire, num_client, parin } = doc.data();
+        const { name, age, phone, accessLevel, email, chiffre_affaire, num_client, parin, numPasseport, commition, location } = doc.data();
         fetchedUsers.push({
           id: doc.id,
-          name,
-          age,
-          phone,
-          accessLevel,
-          email,
-          chiffre_affaire,
-          num_client,
-          parin: "null",
+          name: name || "nul",
+          age: age || 0,
+          phone: phone || "nul",
+          accessLevel: accessLevel || "nul",
+          email: email || "nul",
+          chiffre_affaire: chiffre_affaire || 0,
+          num_client: num_client || 0,
+          numPasseport: numPasseport || "nul",
+          location: location || "nul",
+          commition: commition || 0,
+          parin: parin || "nul",
         });
       });
 
@@ -69,14 +72,14 @@ const Team = () => {
         const { name, age, phone, accessLevel, email, chiffre_affaire, num_client, parin } = doc.data();
         fetchedRabateurs.push({
           id: doc.id,
-          name,
-          age,
-          phone,
-          accessLevel,
-          email,
-          chiffre_affaire,
-          num_client,
-          parin,
+          name: name || "nul",
+          age: age || 0,
+          phone: phone || "nul",
+          accessLevel: accessLevel || "nul",
+          email: email || "nul",
+          chiffre_affaire: chiffre_affaire || 0,
+          num_client: num_client || 0,
+          parin: parin || "nul",
         });
       });
 
@@ -108,17 +111,18 @@ const Team = () => {
   const columns = [
     {
       field: "name",
-      headerName: "Name",
+      headerName: "Nom",
+      flex: 1,
+      cellClassName: "name-column--cell",
+    },
+    {
+      field: "email",
+      headerName: "Email",
       flex: 1,
     },
     {
-      field: "phone",
-      headerName: "Phone Number",
-      flex: 1,
-    },
-    {
-      field: "chiffre_affaire",
-      headerName: "chiffre d'affaire",
+      field: "location",
+      headerName: "deligation",
       flex: 1,
     },
     {
@@ -127,8 +131,25 @@ const Team = () => {
       flex: 1,
     },
     {
-      field: "email",
-      headerName: "Email",
+      field: "chiffre_affaire",
+      headerName: "chiffre d'affaire",
+      flex: 1,
+      renderCell: (params) => `${params.value} DTN`,
+    },
+    {
+      field: "commition",
+      headerName: "commition",
+      flex: 1,
+      renderCell: (params) => `${params.value} DTN`,
+    },
+    {
+      field: "phone",
+      headerName: "numero de telephone",
+      flex: 1,
+    },
+    {
+      field: "numPasseport",
+      headerName: "Passport Number",
       flex: 1,
     },
     {
@@ -139,7 +160,7 @@ const Team = () => {
     {
       field: "accessLevel",
       headerName: "Niveau d'Accès",
-      flex: 1,
+      flex: 2,
       renderCell: ({ row }) => (
         <Box
           width="80%"
@@ -218,21 +239,13 @@ const Team = () => {
             <MenuItem value="admin">Admin</MenuItem>
             <MenuItem value="manager">Manager</MenuItem>
             <MenuItem value="agence">Agence</MenuItem>
-            <MenuItem value="rabateur">Rabateur</MenuItem>
-            <MenuItem value="sous_rabatteur">Voyageur</MenuItem>
+            <MenuItem value="rabateur">Rabatteur</MenuItem>
+            <MenuItem value="sous_rabateur">Sous rabateur</MenuItem>
           </Select>
         </DialogContent>
         <DialogActions>
-          <Button 
-          onClick={() => setOpenDialog(false)}
-          variant="contained"
-          color="primary"
-          >Cancel</Button>
-          <Button
-           onClick={handleAccessLevelChange}
-           variant="contained"
-          color="primary"
-          >Change</Button>
+          <Button onClick={() => setOpenDialog(false)} variant="contained" color="primary">Cancel</Button>
+          <Button onClick={handleAccessLevelChange} variant="contained" color="primary">Change</Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -1,209 +1,204 @@
-import { Box, Button, TextField, MenuItem, Select, InputLabel, FormControl } from "@mui/material";
-import { Formik } from "formik";
-import * as yup from "yup";
-import useMediaQuery from "@mui/material/useMediaQuery";
+import React, { useEffect, useState } from "react";
+import { Box, Typography, Button, Modal, Backdrop, Fade } from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
+import { tokens } from "../../theme";
 import Header from "../../components/Header";
+import { useTheme } from "@mui/material";
+import { getFirestore, collection, getDocs, query, where, doc, updateDoc } from "firebase/firestore";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
 import app from "../../base.js";
 
-const Form = () => {
-  const isNonMobile = useMediaQuery("(min-width:600px)");
+const Invoices = () => {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
 
-  const phoneRegExp =
-    /^((\+[1-9]{1,4}[ -]?)|(\([0-9]{2,3}\)[ -]?)|([0-9]{2,4})[ -]?)*?[0-9]{3,4}[ -]?[0-9]{3,4}$/;
+  const [invoicesData, setInvoicesData] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
-  const checkoutSchema = yup.object().shape({
-    firstName: yup.string().required("required"),
-    lastName: yup.string().required("required"),
-    email: yup.string().email("invalid email").required("required"),
-    password: yup.string().required("required"),
-    contact: yup
-      .string()
-      .matches(phoneRegExp, "Phone number is not valid")
-      .required("required"),
-    age: yup.string().required("required"),
-    access: yup.string().required("required"),
-  });
-
-  const initialValues = {
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    contact: "",
-    age: "",
-    access: "",
-    num_client: "",
-    chiffre_affaire: "",
+  const handleOpen = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setOpen(true);
   };
 
-  const handleFormSubmit = async (values) => {
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedImage(null);
+  };
+
+  const fetchData = async () => {
+    const usersCollection = collection(db, "users");
+    const q = query(usersCollection, where("valid", "==", false));
+    const querySnapshot = await getDocs(q);
+
+    const usersData = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    setInvoicesData(usersData);
+  };
+
+  const handleValidation = async (row) => {
+    const userDocRef = doc(db, "users", row.id);
+    await updateDoc(userDocRef, { valid: true });
+
+    // Create user account with email and password
+    const email = row.email;
+    const password = row.password; 
     try {
-      // Initialize Firebase Authentication and Firestore
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-
-      // Create user with email and password from the form
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        values.email,
-        values.password
-      );
-
-      // Access the user ID
-      const userId = userCredential.user.uid;
-
-      // Add user data to Firestore
-      const userDocRef = await addDoc(collection(db, "users"), {
-        name: values.firstName + " " + values.lastName,
-        email: values.email,
-        phone: values.contact,
-        age: values.age,
-        accessLevel: values.access,
-        num_client: "0",
-        chiffre_affaire: "0",
-      });
-
-      console.log("User created with ID: ", userId);
-      console.log("User data added to Firestore with ID: ", userDocRef.id);
+      await createUserWithEmailAndPassword(auth, email, password);
+      alert(`User account created for ${email}`);
     } catch (error) {
-      console.error("Error creating user:", error);
+      console.error("Error creating user account: ", error);
+      alert(`Error creating user account for ${email}: ${error.message}`);
     }
+
+    // Update local state
+    setInvoicesData((prevData) =>
+      prevData.map((invoice) =>
+        invoice.id === row.id ? { ...invoice, valid: true } : invoice
+      )
+    );
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const columns = [
+    {
+      field: "name",
+      headerName: "Nom",
+      flex: 1,
+      cellClassName: "name-column--cell",
+    },
+    {
+      field: "email",
+      headerName: "Email",
+      flex: 1,
+    },
+    
+    {
+      field: "location",
+      headerName: "deligation",
+      flex: 1,
+    },
+    {
+      field: "num_client",
+      headerName: "nombre de client",
+      flex: 1,
+    },
+    {
+      field: "chiffre_affaire",
+      headerName: "chiffre d'affaire",
+      flex: 1,
+      renderCell: (params) => `${params.value} DTN`,
+
+    },
+    {
+      field: "commition",
+      headerName: "commition",
+      flex: 1,
+      renderCell: (params) => `${params.value} DTN`,
+    },
+    {
+      field: "phone",
+      headerName: "numero de telephone",
+      flex: 1,
+    },
+    {
+      field: "numPasseport",
+      headerName: "Passport Number",
+      flex: 1,
+    },
+    {
+      field: "valid",
+      headerName: "Validation",
+      flex: 1,
+      renderCell: (params) => (
+        <Button
+          variant="contained"
+          color={params.row.valid ? "primary" : "secondary"}
+          onClick={() => handleValidation(params.row)}
+        >
+          {params.row.valid ? "Valide" : "Invalide"}
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <Box m="20px">
-      <Header title="CREATE USER" subtitle="Create a New User Profile" />
-
-      <Formik
-        onSubmit={handleFormSubmit}
-        initialValues={initialValues}
-        validationSchema={checkoutSchema}
+      <Header title="VALIDATION" subtitle="Validate User Accounts" />
+      <Box
+        m="40px 0 0 0"
+        height="75vh"
+        sx={{
+          "& .MuiDataGrid-root": {
+            border: "none",
+          },
+          "& .MuiDataGrid-cell": {
+            borderBottom: "none",
+          },
+          "& .name-column--cell": {
+            color: colors.greenAccent[300],
+          },
+          "& .MuiDataGrid-columnHeaders": {
+            backgroundColor: colors.blueAccent[700],
+            borderBottom: "none",
+          },
+          "& .MuiDataGrid-virtualScroller": {
+            backgroundColor: colors.primary[400],
+          },
+          "& .MuiDataGrid-footerContainer": {
+            borderTop: "none",
+            backgroundColor: colors.blueAccent[700],
+          },
+          "& .MuiCheckbox-root": {
+            color: `${colors.greenAccent[200]} !important`,
+          },
+        }}
       >
-        {({
-          values,
-          errors,
-          touched,
-          handleBlur,
-          handleChange,
-          handleSubmit,
-        }) => (
-          <form onSubmit={handleSubmit}>
-            <Box
-              display="grid"
-              gap="30px"
-              gridTemplateColumns="repeat(4, minmax(0, 1fr))"
-              sx={{
-                "& > div": { gridColumn: isNonMobile ? undefined : "span 4" },
-              }}
-            >
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
-                label="First Name"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.firstName}
-                name="firstName"
-                error={!!touched.firstName && !!errors.firstName}
-                helperText={touched.firstName && errors.firstName}
-                sx={{ gridColumn: "span 2" }}
+        <DataGrid checkboxSelection rows={invoicesData} columns={columns} />
+      </Box>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        closeAfterTransition
+        BackdropComponent={Backdrop}
+        BackdropProps={{
+          timeout: 500,
+        }}
+      >
+        <Fade in={open}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '80%',
+              bgcolor: 'background.paper',
+              boxShadow: 24,
+              p: 4,
+              outline: 'none',
+            }}
+          >
+            {selectedImage && (
+              <img
+                src={selectedImage}
+                alt="Proof of Payment"
+                style={{ width: '100%', height: 'auto' }}
               />
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
-                label="Last Name"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.lastName}
-                name="lastName"
-                error={!!touched.lastName && !!errors.lastName}
-                helperText={touched.lastName && errors.lastName}
-                sx={{ gridColumn: "span 2" }}
-              />
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
-                label="Email"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.email}
-                name="email"
-                error={!!touched.email && !!errors.email}
-                helperText={touched.email && errors.email}
-                sx={{ gridColumn: "span 4" }}
-              />
-              <TextField
-                fullWidth
-                variant="filled"
-                type="password"
-                label="Password"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.password}
-                name="password"
-                error={!!touched.password && !!errors.password}
-                helperText={touched.password && errors.password}
-                sx={{ gridColumn: "span 4" }}
-              />
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
-                label="Contact Number"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.contact}
-                name="contact"
-                error={!!touched.contact && !!errors.contact}
-                helperText={touched.contact && errors.contact}
-                sx={{ gridColumn: "span 4" }}
-              />
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
-                label="Age"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.age}
-                name="age"
-                error={!!touched.age && !!errors.age}
-                helperText={touched.age && errors.age}
-                sx={{ gridColumn: "span 4" }}
-              />
-              <FormControl fullWidth variant="filled" sx={{ gridColumn: "span 4" }}>
-                <InputLabel>Role</InputLabel>
-                <Select
-                  name="access"
-                  value={values.access}
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  error={!!touched.access && !!errors.access}
-                >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
-                  <MenuItem value="admin">Admin</MenuItem>
-                  <MenuItem value="rabatteur">Revendeur</MenuItem>
-                  <MenuItem value="sous_rabatteur">Sous_revendeur</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-            <Box display="flex" justifyContent="end" mt="20px">
-              <Button type="submit" color="secondary" variant="contained">
-                ajouter un utilisateur
-              </Button>
-            </Box>
-          </form>
-        )}
-      </Formik>
+            )}
+          </Box>
+        </Fade>
+      </Modal>
     </Box>
   );
 };
 
-export default Form;
+export default Invoices;

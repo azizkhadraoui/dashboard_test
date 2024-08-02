@@ -87,6 +87,16 @@ const GeographyChart = ({ isDashboard = false }) => {
   return (
     <ResponsiveChoropleth
       data={delegationList}
+//       data={[{
+//         "id": 25,
+//         "value": 200
+//     },{
+//       "id": 3,
+//       "value": 500
+//   },{
+//     "id": 6,
+//     "value":60
+// },]}
       theme={{
         tooltip: {
           container: {

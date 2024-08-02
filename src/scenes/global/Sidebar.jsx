@@ -18,6 +18,10 @@ import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import HistoryIcon from "@mui/icons-material/History";
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import GroupsIcon from '@mui/icons-material/Groups';
+import EventSeatIcon from '@mui/icons-material/EventSeat';
+import DoneOutlineIcon from '@mui/icons-material/DoneOutline';
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -151,14 +155,14 @@ const Sidebar = () => {
             <Item
               title="Payments"
               to="/invoices"
-              icon={<ReceiptOutlinedIcon />}
+              icon={<AttachMoneyIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="groupement"
               to="/group"
-              icon={<ReceiptOutlinedIcon />}
+              icon={<GroupsIcon />}
               selected={selected}
               setSelected={setSelected}
             />
@@ -172,7 +176,7 @@ const Sidebar = () => {
             <Item
               title="tabs"
               to="/tab"
-              icon={<HistoryIcon />}
+              icon={<EventSeatIcon />}
               selected={selected}
               setSelected={setSelected}
             />
@@ -185,7 +189,7 @@ const Sidebar = () => {
               Pages
             </Typography>
             <Item
-              title="Ajouter un Profile"
+              title="Accepter un utilisateur"
               to="/form"
               icon={<PersonOutlinedIcon />}
               selected={selected}
@@ -201,7 +205,7 @@ const Sidebar = () => {
             <Item
               title="Validation"
               to="/validation"
-              icon={<AddCircleOutlineIcon />}
+              icon={<DoneOutlineIcon />}
               selected={selected}
               setSelected={setSelected}
             />
