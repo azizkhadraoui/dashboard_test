@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom"; 
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider } from "./Auth";
 import PrivateRoute from "./PrivateRoute";
 import { ColorModeContext, useMode } from "./theme.js";
@@ -24,9 +24,8 @@ import Login from "./scenes/login";
 import TabsOpen from "./scenes/tabs/index.jsx";
 import Validation from "./scenes/validation/index.jsx";
 import Group from "./scenes/groupement/index.jsx";
-
-
-
+import PieChartTest from "./components/PieChartTest.jsx";
+import FlightChart from "./components/FlightChart.jsx";
 
 function App() {
   const [theme, colorMode] = useMode();
@@ -43,37 +42,165 @@ function App() {
           <CssBaseline />
           <div className="app">
             {showTopbarAndSidebar && <Sidebar />}
-            <main className={currentPath === "/dashboard_test/login" ? "content centered-content" : "content"}>
+            <main
+              className={
+                currentPath === "/dashboard_test/login"
+                  ? "content centered-content"
+                  : "content"
+              }
+            >
               {showTopbarAndSidebar && <Topbar />}
               <Routes>
                 <Route path="/dashboard_test/login" element={<Login />} />
-                <Route path="/dashboard_test/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-                <Route path="/dashboard_test/team" element={<PrivateRoute><Team /></PrivateRoute>} />
-                <Route path="/dashboard_test/contacts" element={<PrivateRoute><Contacts /></PrivateRoute>} />
-                <Route path="/dashboard_test/invoices" element={<PrivateRoute><Invoices /></PrivateRoute>} />
-                <Route path="/dashboard_test/bar" element={<PrivateRoute><Bar /></PrivateRoute>} />
-                <Route path="/dashboard_test/form" element={<PrivateRoute><Form /></PrivateRoute>} />
-                <Route path="/dashboard_test/line" element={<PrivateRoute><Line /></PrivateRoute>} />
-                <Route path="/dashboard_test/pie" element={<PrivateRoute><Pie /></PrivateRoute>} />
-                <Route path="/dashboard_test/faq" element={<PrivateRoute><FAQ /></PrivateRoute>} />
-                <Route path="/dashboard_test/calendar" element={<PrivateRoute><Calendar /></PrivateRoute>} />
-                <Route path="/dashboard_test/geography" element={<PrivateRoute><Geography /></PrivateRoute>} />
-                <Route path="/dashboard_test/validation" element={<PrivateRoute><Validation /></PrivateRoute>} />
-                <Route path="/dashboard_test/group" element={<PrivateRoute><Group /></PrivateRoute>} />
+                <Route
+                  path="/dashboard_test/"
+                  element={
+                    <PrivateRoute>
+                      <Dashboard />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard_test/team"
+                  element={
+                    <PrivateRoute>
+                      <Team />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard_test/contacts"
+                  element={
+                    <PrivateRoute>
+                      <Contacts />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard_test/invoices"
+                  element={
+                    <PrivateRoute>
+                      <Invoices />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard_test/bar"
+                  element={
+                    <PrivateRoute>
+                      <Bar />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard_test/form"
+                  element={
+                    <PrivateRoute>
+                      <Form />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard_test/line"
+                  element={
+                    <PrivateRoute>
+                      <Line />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard_test/pie"
+                  element={
+                    <PrivateRoute>
+                      <Pie />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard_test/faq"
+                  element={
+                    <PrivateRoute>
+                      <FAQ />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard_test/calendar"
+                  element={
+                    <PrivateRoute>
+                      <Calendar />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard_test/geography"
+                  element={
+                    <PrivateRoute>
+                      <Geography />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard_test/validation"
+                  element={
+                    <PrivateRoute>
+                      <Validation />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard_test/group"
+                  element={
+                    <PrivateRoute>
+                      <Group />
+                    </PrivateRoute>
+                  }
+                />
                 <Route
                   path="/dashboard_test/profile/:id"
-                  element={<PrivateRoute><Profile /></PrivateRoute>}
+                  element={
+                    <PrivateRoute>
+                      <Profile />
+                    </PrivateRoute>
+                  }
                 />
                 <Route
                   path="/dashboard_test/pastflights"
-                  element={<PrivateRoute><PastFlights /></PrivateRoute>}
+                  element={
+                    <PrivateRoute>
+                      <PastFlights />
+                    </PrivateRoute>
+                  }
                 />
                 <Route
                   path="/dashboard_test/addoffer"
-                  element={<PrivateRoute><AddOffer /></PrivateRoute>}
+                  element={
+                    <PrivateRoute>
+                      <AddOffer />
+                    </PrivateRoute>
+                  }
                 />
-                <Route path="*" element={<Navigate to="/dashboard_test/" replace />} />
-                <Route path="/dashboard_test/tab" element={<TabsOpen/>} />
+                <Route
+                  path="*"
+                  element={<Navigate to="/dashboard_test/" replace />}
+                />
+                <Route path="/dashboard_test/tab" element={<TabsOpen />} />
+                <Route
+                  path="/testaa"
+                  element={
+                    <PrivateRoute>
+                      <PieChartTest />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/testaa/:flightId"
+                  element={
+                    <PrivateRoute>
+                      <FlightChart />
+                    </PrivateRoute>
+                  }
+                />
               </Routes>
             </main>
           </div>
@@ -84,4 +211,3 @@ function App() {
 }
 
 export default App;
-
